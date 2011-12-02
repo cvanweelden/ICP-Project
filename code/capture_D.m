@@ -1,5 +1,4 @@
 function D = capture_D()
-    addpath('Mex')
     SAMPLE_XML_PATH='Config/SamplesConfig.xml';
 
     % Start the Kinect Process
