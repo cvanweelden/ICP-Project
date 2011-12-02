@@ -1,8 +1,9 @@
 function D = capture_D()
-    SAMPLE_XML_PATH='Config/SamplesConfig.xml';
+
+    CONFIG_XML_PATH='KinectConfig.xml';
 
     % Start the Kinect Process
-    KinectHandles=mxNiCreateContext(SAMPLE_XML_PATH);
+    KinectHandles=mxNiCreateContext(CONFIG_XML_PATH);
 
     D=mxNiDepthRealWorld(KinectHandles);
 
