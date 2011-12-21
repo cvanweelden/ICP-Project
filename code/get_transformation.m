@@ -6,7 +6,7 @@ function [ q_r q_t ] = get_transformation( P, X )
 mu_p = sum(P,2)/size(P,2);
 mu_x = sum(X,2)/size(X,2);
 
-Sigma = (P*X'-mu_p*mu_x')/size(P,2);
+Sigma = (P*X')/size(P,2) - mu_p*mu_x';
 
 A = (Sigma - Sigma');
 Delta = [A(2,3) A(3,1) A(1,2)]';
