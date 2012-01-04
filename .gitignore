@@ -21,3 +21,7 @@ report/report.log
 report/report.pdf
 
 report/report.synctex.gz
+
+code/pointcloud.m~
+
+code/test_icp.m~
