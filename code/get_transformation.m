@@ -18,7 +18,7 @@ Q = [tr Delta'; Delta (Sigma + Sigma' - tr*eye(3))];
 [maxValue,index] = max(diag(D));
 q_r = V(:,index);
 
-q_t = mu_x - quad2rot(q_r) * mu_p;
+q_t = mu_x - quat2rot(q_r) * mu_p;
 
 end
 
