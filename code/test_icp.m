@@ -1,4 +1,4 @@
-bla = load([DATA_PATH '10framesRGBD.mat']);
+bla = load([DATA_PATH filesep '10framesRGBD.mat']);
 
 D = bla.D;
 
