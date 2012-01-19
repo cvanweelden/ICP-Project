@@ -1,24 +1,30 @@
-bla = load([DATA_PATH filesep '10framesRGBD.mat']);
+DATA_DIR = '../rgbd_dataset_freiburg1_xyz';
+OUT_DIR = '../xyz_test';
 
-D = bla.D;
+param.num_iterations = 50;
+param.mse_threshold = 0.01;
+param.debug = 0;
+param.sample_stepsize = 10;
 
-figure;
+depth = dir('../rgbd_dataset_freiburg1_xyz/depth/*.png');
+rgb = dir('../rgbd_dataset_freiburg1_xyz/rgb/*.png');
 
-D1 = D{1}(1:25:end, 1:25:end, :);
-D1 = im2pixels(D1);
+old_frame = depthmap2pointcloud(imread([DATA_DIR filesep 'depth' filesep depth(1).name]));
+writeply(old_frame, imread([DATA_DIR filesep 'rgb' filesep rgb(1).name]), [OUT_DIR filesep 'frame1.ply']);
 
-D1(:,D1(1,:)==0 & D1(2,:)==0 & D1(3,:)==0) = [];
-hold on;
-scatter3(D1(1,:), D1(2,:), D1(3,:), 1, 'b')
+for i = 2:size(depth,1)
+    
+    new_frame = depthmap2pointcloud(imread([DATA_DIR filesep 'depth' filesep depth(i).name]));
+    
+    Q = icp(new_frame, old_frame, param);
+    P = [im2pixels(new_frame); ones(1, size(new_frame,1)*size(new_frame,2))];
+    P = Q * P;
+    P = P(1:3,:);
+    new_frame_alligned = reshape(P', size(new_frame,1), size(new_frame,2), 3);
 
-for i = 2:10
-
-    D2 = D{i}(1:25:end, 1:25:end, :);
-    D2 = im2pixels(D2);
-    D2(:,D2(1,:)==0 & D2(2,:)==0 & D2(3,:)==0) = [];
-
-    [D2_alligned mse] = icp(D2, D1, 0.5);
-    scatter3(D2_alligned(1,:), D2_alligned(2,:), D2_alligned(3,:), 1, 'rx');
-    D1 = D2_alligned;
+    writeply(new_frame_alligned, imread([DATA_DIR filesep 'rgb' filesep rgb(i).name]), [OUT_DIR filesep 'frame' int2str(i) '.ply']);
+    old_frame = new_frame_alligned;
 end
+
+
 
