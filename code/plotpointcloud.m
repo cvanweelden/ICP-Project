@@ -1,4 +1,4 @@
-function [ output_args ] = pointcloud( cloud, meshsize, varargin )
+function [ output_args ] = plotpointcloud( cloud, meshsize, varargin )
 %POINTCLOUD Plots a pointcloud, cloud is a 3xN array of x,y,z points.
 
     p = inputParser;
