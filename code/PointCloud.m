@@ -10,9 +10,22 @@ classdef PointCloud < handle
     methods
         function obj = PointCloud(depthpath, rgbpath)
             % Constructor
-            
-            obj.from_frame(imread(depthpath), imread(rgbpath));
+            if nargin >= 2
+                obj.from_frame(imread(depthpath), imread(rgbpath));
+            end
         end
+        
+        function pc = horzcat(obj, other)
+            % Horizontal concatenation: to enable "pc = [pc1 pc2];"
+            pc = PointCloud();
+            pc.n = obj.n + other.n;
+            pc.xyz = [obj.xyz other.xyz];
+            if obj.has_rgb && other.has_rgb
+                pc.rgb = [obj.rgb other.rgb];
+                pc.has_rgb = true;
+            end
+        end
+        
         
         function from_frame(obj, depth, varargin)
             % Converts a depthmap (+rgb image) to a pointcloud
@@ -94,6 +107,7 @@ classdef PointCloud < handle
 
             fclose(f);
         end
+        
 
     end
 end
