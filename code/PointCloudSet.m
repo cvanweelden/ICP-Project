@@ -4,7 +4,6 @@ classdef PointCloudSet < handle
         num_frames;
         depth_files;
         rgb_files;
-        num_frames;
     end
     
     methods

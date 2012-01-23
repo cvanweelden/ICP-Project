@@ -6,6 +6,7 @@ classdef PointCloud < handle
         xyz;
         rgb;
         has_rgb;
+        normals;
     end
     methods
         function obj = PointCloud(depthpath, rgbpath)
@@ -26,6 +27,14 @@ classdef PointCloud < handle
             end
         end
         
+        function pc = copy(obj)
+            % We need to implement copy explicitly b/c this is a handle
+            pc = PointCloud();
+            pc.n = obj.n;
+            pc.xyz = obj.xyz;
+            pc.rgb = obj.rgb;
+            pc.has_rgb = pc.has_rgb;
+        end
         
         function from_frame(obj, depth, varargin)
             % Converts a depthmap (+rgb image) to a pointcloud
@@ -79,9 +88,37 @@ classdef PointCloud < handle
         function subsample(obj, k)
             % Subsample randomly to k points
             
-            idx = randsample(size(in,2),k);
+            idx = randsample(obj.n, k);
             obj.rgb = obj.rgb(:,idx);
             obj.xyz = obj.xyz(:,idx);
+            obj.n = k;
+        end
+        
+        function computenormals(obj, k)
+            % Compute the normals using the eigenvector corresponding
+            % to the smallest eigenvalue of the pca of the covariance-
+            % matrix of the closest points.
+            % As in the Gen-ICP paper by Segal, Haehnel & Thrun.
+            if nargin < 2
+                % Use 20 neighbours by default
+                k = 20;
+            end
+            k = min(obj.n, k);
+            tree = kdtree_build(obj.xyz');
+            for i=1:obj.n
+                p = obj.xyz(:,i);
+                nearest = kdtree_k_nearest_neighbors(tree, p', k);
+                nearest = obj.xyz(:,nearest);
+                centered = nearest - repmat(p, 1, k);
+                coeffs = princomp(cov(centered'));
+                obj.normals(:,i) = coeffs(:,end);
+            end
+            kdtree_delete(tree)
+        end
+        
+        function plot(obj)
+            quiver3(obj.xyz(1,:), obj.xyz(2,:), obj.xyz(3,:),...
+                obj.normals(1,:), obj.normals(2,:), obj.normals(3,:));
         end
         
         function write(obj, filename)
