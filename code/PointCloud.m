@@ -5,7 +5,6 @@ classdef PointCloud < handle
         n;
         xyz;
         rgb;
-        has_rgb;
         normals;
     end
     methods
@@ -21,10 +20,7 @@ classdef PointCloud < handle
             pc = PointCloud();
             pc.n = obj.n + other.n;
             pc.xyz = [obj.xyz other.xyz];
-            if obj.has_rgb && other.has_rgb
-                pc.rgb = [obj.rgb other.rgb];
-                pc.has_rgb = true;
-            end
+            pc.rgb = [obj.rgb other.rgb];
         end
         
         function pc = copy(obj)
@@ -33,7 +29,7 @@ classdef PointCloud < handle
             pc.n = obj.n;
             pc.xyz = obj.xyz;
             pc.rgb = obj.rgb;
-            pc.has_rgb = pc.has_rgb;
+            pc.normals = obj.normals;
         end
         
         function from_frame(obj, depth, varargin)
@@ -59,9 +55,13 @@ classdef PointCloud < handle
             
             % Load RGB, if provided
             if numel(rgbim) > 0
-                obj.has_rgb = true;
                 obj.rgb = reshape(rgbim, [], 3)';
+            else
+                obj.rgb = zeros(0,obj.n);
             end
+            
+            % Initialize empty normals
+            obj.normals = zeros(0, obj.n);
             
             size(obj.xyz)
             % Filter invalid pixels
@@ -93,7 +93,7 @@ classdef PointCloud < handle
             obj.xyz = obj.xyz(:,idx);
             obj.n = k;
         end
-        
+                
         function computenormals(obj, k)
             % Compute the normals using the eigenvector corresponding
             % to the smallest eigenvalue of the pca of the covariance-
@@ -103,6 +103,7 @@ classdef PointCloud < handle
                 % Use 20 neighbours by default
                 k = 20;
             end
+            obj.normals = []
             k = min(obj.n, k);
             tree = kdtree_build(obj.xyz');
             for i=1:obj.n
@@ -115,12 +116,7 @@ classdef PointCloud < handle
             end
             kdtree_delete(tree)
         end
-        
-        function plot(obj)
-            quiver3(obj.xyz(1,:), obj.xyz(2,:), obj.xyz(3,:),...
-                obj.normals(1,:), obj.normals(2,:), obj.normals(3,:));
-        end
-        
+                
         function write(obj, filename)
             % Write a PLY file containing this point cloud
     
@@ -128,7 +124,7 @@ classdef PointCloud < handle
     
             fprintf(f, 'ply\n');
             fprintf(f, 'format ascii 1.0\n');
-            fprintf(f, 'element vertex %d\n',n);
+            fprintf(f, 'element vertex %d\n', obj.n);
             fprintf(f, 'property float x\n');
             fprintf(f, 'property float y\n');
             fprintf(f, 'property float z\n');
@@ -138,8 +134,8 @@ classdef PointCloud < handle
             fprintf(f, 'property uchar alpha\n');
             fprintf(f, 'end_header\n');
 
-            for i=1:obj.width
-                fprintf(f, '%f %f %f %d %d %d 0\n', XYZ(:,i), RGB(:,i));
+            for i=1:obj.n
+                fprintf(f, '%f %f %f %d %d %d 0\n', obj.xyz(:,i), obj.rgb(:,i));
             end
 
             fclose(f);
