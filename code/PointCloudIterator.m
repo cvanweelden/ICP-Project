@@ -7,6 +7,7 @@ classdef PointCloudIterator < handle
         index;
         pointcloud;
         rgb_values;
+        timestamp;
     end
     methods
         function obj = PointCloudIterator(data_dir)
@@ -25,6 +26,7 @@ classdef PointCloudIterator < handle
             depth_frame = imread([obj.data_dir filesep 'depth' filesep obj.depth_files(obj.index).name]);
             rgb_frame = imread([obj.data_dir filesep 'rgb' filesep obj.rgb_files(obj.index).name]);
             [obj.pointcloud obj.rgb_values] = depthmap2pointcloud(depth_frame, rgb_frame);
+            obj.timestamp = obj.depth_files(obj.index).name(1:end-4);
         end
     end
 end
