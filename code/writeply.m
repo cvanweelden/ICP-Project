@@ -5,8 +5,13 @@ function [ output_args ] = ply( XYZ, RGB, filename )
     if ndims(XYZ) > 2
         XYZ = im2pixels(XYZ);
     end
+    
     if ndims(RGB) > 2
         RGB = im2pixels(RGB);
+    end
+    
+    if size(XYZ) ~= size(RGB)
+        throw('XYZ and RGB must be same size')
     end
     
     n = size(XYZ,2);
