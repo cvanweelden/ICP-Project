@@ -112,7 +112,8 @@ classdef PointCloud < handle
                 nearest = obj.xyz(:,nearest);
                 centered = nearest - repmat(p, 1, k);
                 coeffs = princomp(cov(centered'));
-                obj.normals(:,i) = coeffs(:,end);
+                normal = coeffs(:,end);
+                obj.normals(:,i) = normal/norm(normal);
             end
             kdtree_delete(tree)
         end
