@@ -1,4 +1,4 @@
-function [Mcum mse_profile] = gicp( model, frame, varargin)
+function [Mcum mse_profile] = gicp( frame, model, varargin)
 % Generalized ICP based on:
 % [1] Generalized-ICP
 %     Segal, A. and Haehnel, D. and Thrun, 
@@ -10,6 +10,7 @@ p.addParamValue('MaxIterations', 50, @(x)isnumeric(x));
 p.addParamValue('MSEThreshold',  1e-5, @(x)isnumeric(x));
 p.addParamValue('MaxCorrespondenceDist', inf, @(x)isnumeric(x));
 p.addParamValue('CovarEpsilon',  0.01, @(x)isnumeric(x));
+p.addParamValue('Method', 'gicp', @(x)strcmpi(x,'gicp') || strcmpi(x,'wsm') || strcmpi(x,'icp'))
 p.addParamValue('Verbose', true);
 p.parse(varargin{:});
 
@@ -19,10 +20,11 @@ d_max = p.Results.MaxCorrespondenceDist;
 e = p.Results.CovarEpsilon;
 verbose = p.Results.Verbose;
 
-A = model.xyz; %P
-B = frame.xyz; %X
-Nu = model.normals;
-Mu = frame.normals;
+A = frame.xyz; %P
+Bo = model.xyz; %X
+B = Bo;
+Nu = frame.normals;
+Mu = model.normals;
 
 % Octree for model data
 tree = kdtree_build(B');
@@ -33,7 +35,8 @@ C = [e 0 0;
      0 1 0;
      0 0 1];
 Ca = zeros(3,3,size(A,2));
-Cb = zeros(3,3,size(A,2));
+Cbo = zeros(3,3,size(A,2));
+Cb = Cbo;
 for i=1:size(B,2)
     Rmu = [Mu(:,i) [0 1 0]' [0 0 1]'];
     Rnu = [Nu(:,i) [0 1 0]' [0 0 1]'];
@@ -45,15 +48,24 @@ end
 
     function c = cost(Tp)
         q = Tp(1:4);
+        q = q/norm(q);
         R = quat2rot(q);
-        t = Tp(1:3); 
+        t = Tp(5:7);
+        T = [R t'; 0 0 0 1];
         c = 0;
+        At = [R t'; 0 0 0 1] * [A; ones(1,size(A,2))];
+        At = At(1:3, :);
+        D = B - At;
+        
         for j=1:size(B,2)
-            di = B(:,j) - R*A(:,j) + t';
             covar_error = Cb(:,:,j) + R*Ca(:,:,j)*R';
-            er = (di' * (covar_error\di));
-            c = c + di'*di;
+            er = D(:,i)' * (covar_error\D(:,i));
+            c = c + er;
         end
+%         At = [R t'; 0 0 0 1] * [A; ones(1,size(A,2))];
+%         At = At(1:3, :);
+%         c = sum(sum((B - At).^2, 2));
+            
     end
 
 % The transformation, T, as it's called in [1].
@@ -72,30 +84,34 @@ for iter = 1:maxiter
     end
     
     % Reorder B and corresponding covariance matrices
-    B = B(:, NB);
-    Cb = Cb(:, :, NB);
+    B = Bo(:, NB);
+    Cb = Cbo(:, :, NB);
     
     % Compute the new transformation
     % As [1] mentions, there is no closed-form solution anymore
     % So we use fminsearch
-    qt = fminsearch(@cost, [1 0 0 0 0 0 0] , struct('Display', 'iter', 'MaxIter', 10));
+    
+    qt = fminsearch(@cost, [1 0 0 0 0 0 0] , struct('Display', 'final'));
+    % Bij icp: closed form
     
     % Create a homogeneous transformation matrix
-    M = [quat2rot(qt(1:4)) qt(1:3)'; 0 0 0 1];
+    q = qt(1:4);
+    q = q/norm(q);
+    M = [quat2rot(q) qt(5:7)'; 0 0 0 1];
     
     % Apply the new transformation to the model
     % Tcum = ... = [quat2rot(q_r) q_t; 0 0 0 1] * Tcum;
     A = M * [A; ones(1, size(A,2))];
     A = A(1:3, :);
+    % TODO: HIER QUAT + TRANS
     Mcum = M * Mcum;
     
-    
-    mse_n = mean(sum((B-A).^2,2));    
+    mse_n = mean(sum((B-A).^2));    
     if verbose
-        fprintf('Iter %d MSE %g',iter, mse_n);
+        fprintf('Iter %d MSE %g\n',iter, mse_n);
     end
     
-    if mse - mse_n < msethresh && false
+    if mse - mse_n < msethresh
       break
     end
     mse = mse_n;
