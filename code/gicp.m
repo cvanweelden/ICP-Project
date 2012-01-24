@@ -45,17 +45,15 @@ end
 
     function c = cost(Tp)
         q = Tp(1:4);
-        q = q/norm(q);
         R = quat2rot(q);
-        t = Tp(1:3);
+        t = Tp(1:3); 
         c = 0;
         for j=1:size(B,2)
             di = B(:,j) - R*A(:,j) + t';
-            covar_error = Cb(:,:,j) + R*Ca(:,:,j)*R;
+            covar_error = Cb(:,:,j) + R*Ca(:,:,j)*R';
             er = (di' * (covar_error\di));
-            c = c + er;
+            c = c + di'*di;
         end
-        disp(c)
     end
 
 % The transformation, T, as it's called in [1].
@@ -67,11 +65,7 @@ Mcum = eye(4); % The cumulative transform
 mse = inf;
 mse_profile = [];
 for iter = 1:maxiter
-    
-    if verbose
-        fprintf('Iter %d MSE %g',iter, mse);
-    end
-    
+
     % Find point correspondences
     for i = 1:size(A,2)
         NB(i) = kdtree_k_nearest_neighbors(tree, A(:,i)', 1);
@@ -84,7 +78,7 @@ for iter = 1:maxiter
     % Compute the new transformation
     % As [1] mentions, there is no closed-form solution anymore
     % So we use fminsearch
-    qt = fminsearch(@cost, [1 0 0 0 0 0 0] , struct('Display', 'iter'));
+    qt = fminsearch(@cost, [1 0 0 0 0 0 0] , struct('Display', 'iter', 'MaxIter', 10));
     
     % Create a homogeneous transformation matrix
     M = [quat2rot(qt(1:4)) qt(1:3)'; 0 0 0 1];
@@ -93,10 +87,15 @@ for iter = 1:maxiter
     % Tcum = ... = [quat2rot(q_r) q_t; 0 0 0 1] * Tcum;
     A = M * [A; ones(1, size(A,2))];
     A = A(1:3, :);
-    mse_n = mean(sum((A-B).^2,2));
     Mcum = M * Mcum;
     
-    if mse - mse_n < msethresh
+    
+    mse_n = mean(sum((B-A).^2,2));    
+    if verbose
+        fprintf('Iter %d MSE %g',iter, mse_n);
+    end
+    
+    if mse - mse_n < msethresh && false
       break
     end
     mse = mse_n;
