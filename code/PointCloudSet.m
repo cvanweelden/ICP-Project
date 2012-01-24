@@ -17,7 +17,7 @@ classdef PointCloudSet < handle
         
         function B = subsref(obj,s)
             % Allows access like "pcs{1}"
-            if s.type == '{}'
+            if strcmp(s.type,'{}')
                 idx = s.subs{1};
                 depthpath = fullfile(obj.data_dir, 'depth', obj.depth_files(idx).name);
                 rgbpath = fullfile(obj.data_dir, 'rgb', obj.rgb_files(idx).name);

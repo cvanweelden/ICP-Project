@@ -103,7 +103,7 @@ classdef PointCloud < handle
                 % Use 20 neighbours by default
                 k = 20;
             end
-            obj.normals = []
+            obj.normals = [];
             k = min(obj.n, k);
             tree = kdtree_build(obj.xyz');
             for i=1:obj.n
