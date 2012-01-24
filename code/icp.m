@@ -1,8 +1,5 @@
 function [P Q mse mse_profile num_iter] = icp( P, X, par)
 %ICP Iterated Closest Point allignment of data P to model X
-%   P and X are HEIGHTxWIDTHx3 point clouds. MSE_THRESHOLD is the desired
-%   precision in mean squared errror. DEBUG (optional) 0 (default):no debug
-%   info, 1:print MSE on each iteration.
 
 if (nargin < 3)
     par.num_iterations = 1000;
@@ -32,7 +29,7 @@ for j = 1:par.num_iterations
     Q = [quat2rot(q_r) q_t; 0 0 0 1] * Q;
     P = [quat2rot(q_r) q_t; 0 0 0 1] * [P; ones(1, size(P,2))];
     P = P(1:3, :);
-    mse = mean(sum((P-X_NB).^2,2));
+    mse = mean(sum((P-X_NB).^2));
     
     if mse < par.mse_threshold
       break
