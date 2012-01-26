@@ -1,4 +1,4 @@
-function [ q_r q_t ] = get_transformation( P, X )
+function [ qt ] = get_transformation( P, X )
 %GET_TRANSFORMATION compute registration vector of data P to model X
 %   P and X are 3xN matrixes for N points in 3 dimensions, i.e. each column
 %   corresponds to a single point. See Besl & McKay (1992) section III.C.
@@ -15,10 +15,12 @@ tr = trace(Sigma);
 Q = [tr Delta'; Delta (Sigma + Sigma' - tr*eye(3))];
 
 [V,D] = eig(Q);
-[maxValue,index] = max(diag(D));
+[~,index] = max(diag(D));
 q_r = V(:,index);
 
 q_t = mu_x - quat2rot(q_r) * mu_p;
+
+qt = [q_r' q_t'];
 
 end
 

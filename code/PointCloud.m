@@ -6,12 +6,15 @@ classdef PointCloud < handle
         xyz;
         rgb;
         normals;
+        timestamp;
     end
     methods
         function obj = PointCloud(depthpath, rgbpath)
             % Constructor
             if nargin >= 2
                 obj.from_frame(imread(depthpath), imread(rgbpath));
+                % Set timestamp
+                [~, obj.timestamp, ~] = fileparts(depthpath);
             end
         end
         
@@ -30,6 +33,7 @@ classdef PointCloud < handle
             pc.xyz = obj.xyz;
             pc.rgb = obj.rgb;
             pc.normals = obj.normals;
+            pc.timestamp = obj.timestamp;
         end
         
         function from_frame(obj, depth, varargin)
@@ -63,7 +67,6 @@ classdef PointCloud < handle
             % Initialize empty normals
             obj.normals = zeros(0, obj.n);
             
-            size(obj.xyz)
             % Filter invalid pixels
             mask = find(Z ~= 0);
             obj.xyz = obj.xyz(:,mask);
@@ -82,7 +85,12 @@ classdef PointCloud < handle
         
         function apply_qt(obj, q, t)
             % Apply a quaternion+translation transformation
-            % TODO
+            obj.xyz = quatrotate(q, obj.xyz')' + repmat(t',1,size(obj.xyz,2));
+        end
+        
+        function apply_qt_inv(obj, q, t)
+            % Apply a quaternion+translation transformation
+            obj.xyz = quatrotate(quatinv(q), (obj.xyz - repmat(t',1,size(obj.xyz,2)))')';
         end
         
         function subsample(obj, k)
@@ -115,7 +123,7 @@ classdef PointCloud < handle
                 normal = coeffs(:,end);
                 obj.normals(:,i) = normal/norm(normal);
             end
-            kdtree_delete(tree)
+            kdtree_delete(tree);
         end
                 
         function write(obj, filename)

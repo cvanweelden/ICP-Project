@@ -1,16 +1,16 @@
-function [Mcum mse_profile] = gicp( frame, model, varargin)
+function [q_cum t_cum mse_profile] = gicp( frame, model, varargin)
 % Generalized ICP based on:
 % [1] Generalized-ICP
 %     Segal, A. and Haehnel, D. and Thrun, 
 %     S.?Proc. of Robotics: Science and Systems (RSS) ? ? (2009)
-% P and X are point clouds.
+
 
 p = inputParser;
 p.addParamValue('MaxIterations', 50, @(x)isnumeric(x));
 p.addParamValue('MSEThreshold',  1e-5, @(x)isnumeric(x));
 p.addParamValue('MaxCorrespondenceDist', inf, @(x)isnumeric(x));
 p.addParamValue('CovarEpsilon',  0.01, @(x)isnumeric(x));
-p.addParamValue('Method', 'gicp', @(x)strcmpi(x,'gicp') || strcmpi(x,'wsm') || strcmpi(x,'icp'))
+p.addParamValue('Method', 'gicp', @(x)strcmpi(x,'gicp') || strcmpi(x,'wsm') || strcmpi(x,'icp'));
 p.addParamValue('Verbose', true);
 p.parse(varargin{:});
 
@@ -19,9 +19,10 @@ msethresh = p.Results.MSEThreshold;
 d_max = p.Results.MaxCorrespondenceDist;
 e = p.Results.CovarEpsilon;
 verbose = p.Results.Verbose;
+method = p.Results.Method;
 
-A = frame.xyz; %P
-Bo = model.xyz; %X
+A = frame.xyz;
+Bo = model.xyz;
 B = Bo;
 Nu = frame.normals;
 Mu = model.normals;
@@ -45,33 +46,27 @@ for i=1:size(B,2)
 end
 
 % The cost function we'll try to minimize: (2) in [1]
-
     function c = cost(Tp)
-        q = Tp(1:4);
-        q = q/norm(q);
+        q = quatnormalize(Tp(1:4));
         R = quat2rot(q);
         t = Tp(5:7);
-        T = [R t'; 0 0 0 1];
-        c = 0;
-        At = [R t'; 0 0 0 1] * [A; ones(1,size(A,2))];
-        At = At(1:3, :);
+        At = quatrotate(q, A')' + repmat(t',1,size(A,2));
         D = B - At;
         
+        c = 0;
         for j=1:size(B,2)
             covar_error = Cb(:,:,j) + R*Ca(:,:,j)*R';
             er = D(:,i)' * (covar_error\D(:,i));
             c = c + er;
-        end
-%         At = [R t'; 0 0 0 1] * [A; ones(1,size(A,2))];
-%         At = At(1:3, :);
-%         c = sum(sum((B - At).^2, 2));
-            
+        end 
+%         c = sum(dot(D,D));
     end
 
 % The transformation, T, as it's called in [1].
 % This is [q(1) q(2) q(3) q(4) t(1) t(2) t(3)]
 
-Mcum = eye(4); % The cumulative transform
+q_cum = [1 0 0 0]; % The cumulative transform
+t_cum = [0 0 0];
 
 %Run the ICP loop until difference in MSE is < msethresh
 mse = inf;
@@ -91,28 +86,27 @@ for iter = 1:maxiter
     % As [1] mentions, there is no closed-form solution anymore
     % So we use fminsearch
     
-    qt = fminsearch(@cost, [1 0 0 0 0 0 0] , struct('Display', 'final'));
-    % Bij icp: closed form
+    if (strcmpi(method, 'gicp'))
+        qt = fminsearch(@cost, [1 0 0 0 0 0 0] , struct('Display', 'final'));
+    elseif (strcmpi(method, 'icp'))
+        qt = get_transformation(A, B);
+        qt(1:4) = quatinv(qt(1:4)); %TODO: figure out what went wrong here
+    end
+    dq = quatnormalize(qt(1:4));
     
-    % Create a homogeneous transformation matrix
-    q = qt(1:4);
-    q = q/norm(q);
-    M = [quat2rot(q) qt(5:7)'; 0 0 0 1];
+    % Apply the new transformation to the point cloud
+    A = quatrotate(dq, A')' + repmat(qt(5:7)',1,size(A,2));
     
-    % Apply the new transformation to the model
-    % Tcum = ... = [quat2rot(q_r) q_t; 0 0 0 1] * Tcum;
-    A = M * [A; ones(1, size(A,2))];
-    A = A(1:3, :);
-    % TODO: HIER QUAT + TRANS
-    Mcum = M * Mcum;
+    t_cum = t_cum + quatrotate(q_cum, qt(5:7));
+    q_cum = quatmultiply(dq, q_cum);
     
-    mse_n = mean(sum((B-A).^2));    
+    mse_n = mean(sum((B-A).^2));
     if verbose
         fprintf('Iter %d MSE %g\n',iter, mse_n);
     end
-    
-    if mse - mse_n < msethresh
-      break
+     
+    if abs(mse - mse_n) < msethresh
+        break
     end
     mse = mse_n;
     mse_profile(iter) = mse; %#ok<AGROW>
