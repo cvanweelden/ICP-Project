@@ -1,52 +1,88 @@
-function [results] = do_registration(input_dir, output_dir, icp_params)
+function [results] = do_registration(input_dir, output_dir, varargin)
 
-MAX_CLOUD_SIZE = 1e4;
 
-%Default parameters for the ICP method.
-if (nargin < 3)
-    icp_params.num_iterations = 50;
-    icp_params.mse_threshold = 0.01;
-    icp_params.debug = 0;
-end
+% Parse input arguments
+p = inputParser;
+p.addParamValue('ModelMode',     'global', @(x)strcmpi(x,'global') || strcmpi(x,'previous'));
+p.addParamValue('MaxCloudSize',  1e4, @(x)isnumeric(x));
+p.addParamValue('MaxFrames',  inf, @(x)isnumeric(x));
+p.addParamValue('StartPosition', [0 0 0], @(x)isnumeric(x) && numel(x) == 3);
+p.addParamValue('StartOrientation', [1 0 0 0], @(x)isnumeric(x) && numel(x) == 4);
+p.addParamValue('GICPArgs', {});
+p.parse(varargin{:});
+
+modelmode = p.Results.ModelMode;
+cloudsize = p.Results.MaxCloudSize;
+gicpargs = p.Results.GICPArgs;
+maxframes = p.Results.MaxFrames;
 
 mkdir(output_dir);
-mkdir([output_dir filesep 'frames']);
+mkdir(fullfile(output_dir,'frames'));
 
-pci = PointCloudIterator(input_dir);
+pcs = PointCloudSet(input_dir);
 
-results.avg_mse = 0.0;
-results.mse_profile = cell(pci.num_frames-1,1);
-results.num_iter = zeros(pci.num_frames-1,1);
-results.transformations = cell(pci.num_frames-1,1);
+%Write the first frame with the initial pose.
+qt = [p.Results.StartOrientation p.Results.StartPosition];
+frame = pcs{1};
+frame.apply_qt(qt); 
+frame.write(fullfile(output_dir,'frames','frame1.ply'));
 
 %Initialize the registration with the first depth frame.
-pci.next();
-writeply(pci.pointcloud, pci.rgb_values, [output_dir filesep 'frames' filesep 'frame1.ply']);
-model = subsample_pointcloud(pci.pointcloud, MAX_CLOUD_SIZE);
-Q_prev = eye(4);
+model = frame.copy();
+model.subsample(cloudsize);
 
-for i = 2:pci.num_frames
-    fprintf('Alligning frame %i\n', i);
+results.avg_mse = 0.0;
+results.mse_profile{1} = [];
+results.num_iter(1) = 0;
+results.transformations{1} = qt;
+results.pose{1} = qt;
+results.timestamp{1} = model.timestamp;
+
+for i = 2:min(pcs.num_frames, maxframes)
+    fprintf('Aligning frame %i\n', i);
     
-    pci.next();
-    new_frame = subsample_pointcloud(pci.pointcloud, MAX_CLOUD_SIZE);
-    new_frame = apply_transform(new_frame, Q_prev);
+    % Compute normals for the model (TODO: here?)
+    model.computenormals();
     
-    %Call the ICP method and save the results.
-    [new_frame_alligned dQ mse mse_profile num_iter] = icp(new_frame, model, icp_params);
-    Q_prev = dQ * Q_prev;
-    results.avg_mse = results.avg_mse + mse;
-    results.mse_profile{i-1} = mse_profile;
-    results.num_iter(i-1) = num_iter;
-    results.transformations{i-1} = dQ;
+    % Load up a new frame
+    frame = pcs{i};
+    new_frame = frame.copy();
+    new_frame.subsample(cloudsize);
+    new_frame.computenormals();
+    new_frame.apply_qt(qt);
     
-    writeply(apply_transform(pci.pointcloud,Q_prev), pci.rgb_values, [output_dir filesep 'frames' filesep 'frame' int2str(i) '.ply']);
+    % Call the ICP method and save the results.
+    [dqt mse_profile] = gicp(new_frame, model, gicpargs{:});
+    qt = rigid_multiply(dqt, qt);
+    results.avg_mse = results.avg_mse + mse_profile(end);
+    results.mse_profile{i} = mse_profile;
+    results.num_iter(i) = numel(mse_profile);
+    results.transformations{i} = dqt;
+    results.pose{i} = qt;
+    results.timestamp{i} = new_frame.timestamp;
     
-    model = subsample_pointcloud([model new_frame_alligned], MAX_CLOUD_SIZE);
+    % Write the new frame
+    frame.apply_qt(qt);
+    frame.write(fullfile(output_dir, 'frames', sprintf('frame%d.ply',i)));
+    % TODO: Below is a bit awkward, this used to be 'new_frame_aligned',
+    % but there is a bit of a discrepancy between pointCloud classes
+    % and XYZ matrices in gicp. 
+    frame.subsample(cloudsize);
+    
+    % Update the model
+    if strcmpi(modelmode, 'global')
+       model = [model frame]; %#ok<AGROW>
+    else
+        model = frame;
+    end
+    model.subsample(cloudsize);
 end
 
-results.avg_mse = results.avg_mse / (pci.num_frames-1);
-save([output_dir filesep 'results.mat'], 'results');
+results.avg_mse = results.avg_mse / (pcs.num_frames-1);
+save(fullfile(output_dir, 'results.mat'), 'results');
+
+write_trajectory(results, fullfile(output_dir, 'trajectory.txt'));
+
 clear('icp');
 
 
