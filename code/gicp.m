@@ -1,4 +1,4 @@
-function [q_cum t_cum mse_profile] = gicp( frame, model, varargin)
+function [qt mse_profile] = gicp( frame, model, varargin)
 % Generalized ICP based on:
 % [1] Generalized-ICP
 %     Segal, A. and Haehnel, D. and Thrun, 
@@ -28,7 +28,7 @@ Nu = frame.normals;
 Mu = model.normals;
 
 % Octree for model data
-tree = kdtree_build(B');
+tree = kdtree_build(Bo');
 NB = zeros(size(A,2),1);
 
 % Precompute covariances ( see [1] Section III.B )
@@ -49,13 +49,14 @@ end
     function c = cost(Tp)
         q = quatnormalize(Tp(1:4));
         R = quat2rot(q);
-        t = Tp(5:7);
-        At = quatrotate(q, A')' + repmat(t',1,size(A,2));
-        D = B - At;
+        T = [R Tp(5:7)'; 0 0 0 1];
+        At = T * [A_corr; ones(1,size(A_corr,2))];
+        At = At(1:3, :);
         
+        D = B_corr - At;
         c = 0;
-        for j=1:size(B,2)
-            covar_error = Cb(:,:,j) + R*Ca(:,:,j)*R';
+        for j=1:size(B_corr,2)
+            covar_error = Cb_corr(:,:,j) + R*Ca_corr(:,:,j)*R';
             er = D(:,i)' * (covar_error\D(:,i));
             c = c + er;
         end 
@@ -65,40 +66,46 @@ end
 % The transformation, T, as it's called in [1].
 % This is [q(1) q(2) q(3) q(4) t(1) t(2) t(3)]
 
-q_cum = [1 0 0 0]; % The cumulative transform
-t_cum = [0 0 0];
+qt = [1 0 0 0 0 0 0];
 
 %Run the ICP loop until difference in MSE is < msethresh
 mse = inf;
 mse_profile = [];
 for iter = 1:maxiter
 
-    % Find point correspondences
+    % Find closest points
     for i = 1:size(A,2)
         NB(i) = kdtree_k_nearest_neighbors(tree, A(:,i)', 1);
     end
     
     % Reorder B and corresponding covariance matrices
-    B = Bo(:, NB);
-    Cb = Cbo(:, :, NB);
+    B_corr = Bo(:, NB);
+    Cb_corr = Cbo(:, :, NB);
+    A_corr = A;
+    Ca_corr = Ca;
+    
+    %Filter out non-correspondences according to max distance.
+    mask = sqrt(sum((A_corr - B_corr).^2)) > d_max;
+    B_corr(:,mask) = [];
+    Cb_corr(:,:,mask) = [];
+    A_corr(:,mask) = [];
+    Ca_corr(:,:,mask) = [];    
     
     % Compute the new transformation
     % As [1] mentions, there is no closed-form solution anymore
     % So we use fminsearch
     
     if (strcmpi(method, 'gicp'))
-        qt = fminsearch(@cost, [1 0 0 0 0 0 0] , struct('Display', 'final'));
+        dqt = fminsearch(@cost, [1 0 0 0 0 0 0] , struct('Display', 'iter', 'TolFun', 0.1));
     elseif (strcmpi(method, 'icp'))
-        qt = get_transformation(A, B);
-        qt(1:4) = quatinv(qt(1:4)); %TODO: figure out what went wrong here
+        dqt = get_transformation(A_corr, B_corr);
     end
-    dq = quatnormalize(qt(1:4));
     
     % Apply the new transformation to the point cloud
-    A = quatrotate(dq, A')' + repmat(qt(5:7)',1,size(A,2));
+    A = rigid_transform(dqt, A);
     
-    t_cum = t_cum + quatrotate(q_cum, qt(5:7));
-    q_cum = quatmultiply(dq, q_cum);
+    % Apply the new transformation to the transform
+    qt = rigid_multiply(dqt, qt);
     
     mse_n = mean(sum((B-A).^2));
     if verbose

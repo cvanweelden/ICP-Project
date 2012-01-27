@@ -4,7 +4,7 @@ function [results] = do_registration(input_dir, output_dir, varargin)
 % Parse input arguments
 p = inputParser;
 p.addParamValue('ModelMode',     'global', @(x)strcmpi(x,'global') || strcmpi(x,'previous'));
-p.addParamValue('MaxCloudSize',  1e3, @(x)isnumeric(x));
+p.addParamValue('MaxCloudSize',  1e4, @(x)isnumeric(x));
 p.addParamValue('MaxFrames',  inf, @(x)isnumeric(x));
 p.addParamValue('StartPosition', [0 0 0], @(x)isnumeric(x) && numel(x) == 3);
 p.addParamValue('StartOrientation', [1 0 0 0], @(x)isnumeric(x) && numel(x) == 4);
@@ -21,22 +21,21 @@ mkdir(fullfile(output_dir,'frames'));
 
 pcs = PointCloudSet(input_dir);
 
-%Initialize the registration with the first depth frame.
+%Write the first frame with the initial pose.
+qt = [p.Results.StartOrientation p.Results.StartPosition];
 frame = pcs{1};
+frame.apply_qt(qt); 
+frame.write(fullfile(output_dir,'frames','frame1.ply'));
+
+%Initialize the registration with the first depth frame.
 model = frame.copy();
 model.subsample(cloudsize);
-
-%Write the first frame with the initial pose.
-q = p.Results.StartOrientation;
-t = p.Results.StartPosition;
-frame.apply_qt(q,t);
-frame.write(fullfile(output_dir,'frames','frame1.ply'));
 
 results.avg_mse = 0.0;
 results.mse_profile{1} = [];
 results.num_iter(1) = 0;
-results.transformations{1} = [q t];
-results.pose{1} = [q t];
+results.transformations{1} = qt;
+results.pose{1} = qt;
 results.timestamp{1} = model.timestamp;
 
 for i = 2:min(pcs.num_frames, maxframes)
@@ -50,31 +49,31 @@ for i = 2:min(pcs.num_frames, maxframes)
     new_frame = frame.copy();
     new_frame.subsample(cloudsize);
     new_frame.computenormals();
+    new_frame.apply_qt(qt);
     
     % Call the ICP method and save the results.
-    [dq dt mse_profile] = gicp(new_frame, model, gicpargs{:});
-    t = t + quatrotate(q,dt);
-    q = quatmultiply(dq, q);
+    [dqt mse_profile] = gicp(new_frame, model, gicpargs{:});
+    qt = rigid_multiply(dqt, qt);
     results.avg_mse = results.avg_mse + mse_profile(end);
     results.mse_profile{i} = mse_profile;
     results.num_iter(i) = numel(mse_profile);
-    results.transformations{i} = [dq dt];
-    results.pose{i} = [q t];
+    results.transformations{i} = dqt;
+    results.pose{i} = qt;
     results.timestamp{i} = new_frame.timestamp;
     
     % Write the new frame
-    frame.apply_qt(q, t);
+    frame.apply_qt(qt);
     frame.write(fullfile(output_dir, 'frames', sprintf('frame%d.ply',i)));
     % TODO: Below is a bit awkward, this used to be 'new_frame_aligned',
     % but there is a bit of a discrepancy between pointCloud classes
     % and XYZ matrices in gicp. 
+    frame.subsample(cloudsize);
     
     % Update the model
     if strcmpi(modelmode, 'global')
-        model.apply_qt_inv(dq, dt);
-        model = [model new_frame]; %#ok<AGROW>
+       model = [model frame]; %#ok<AGROW>
     else
-        model = new_frame;
+        model = frame;
     end
     model.subsample(cloudsize);
 end

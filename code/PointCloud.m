@@ -83,14 +83,9 @@ classdef PointCloud < handle
             obj.xyz = obj.xyz(1:3,:);
         end
         
-        function apply_qt(obj, q, t)
+        function apply_qt(obj, qt)
             % Apply a quaternion+translation transformation
-            obj.xyz = quatrotate(q, obj.xyz')' + repmat(t',1,size(obj.xyz,2));
-        end
-        
-        function apply_qt_inv(obj, q, t)
-            % Apply a quaternion+translation transformation
-            obj.xyz = quatrotate(quatinv(q), (obj.xyz - repmat(t',1,size(obj.xyz,2)))')';
+            obj.xyz = rigid_transform(qt, obj.xyz);
         end
         
         function subsample(obj, k)
