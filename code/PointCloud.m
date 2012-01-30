@@ -81,11 +81,13 @@ classdef PointCloud < handle
             % Apply a (homogeneous) transformation matrix
             obj.xyz = T * [obj.xyz; ones(1, obj.n)];
             obj.xyz = obj.xyz(1:3,:);
+            obj.computenormals();
         end
         
         function apply_qt(obj, qt)
             % Apply a quaternion+translation transformation
             obj.xyz = rigid_transform(qt, obj.xyz);
+            obj.computenormals();
         end
         
         function subsample(obj, k)
