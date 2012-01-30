@@ -37,8 +37,7 @@ if use_covars
          0 1 0;
          0 0 1];
     Ca = zeros(3,3,size(A,2));
-    Cbo = zeros(3,3,size(A,2));
-    Cb = Cbo;
+    Cb = zeros(3,3,size(A,2));
     for i=1:size(B,2)
         Rmu = [model.normals(:,i) [0 1 0]' [0 0 1]'];
         Rnu = [frame.normals(:,i) [0 1 0]' [0 0 1]'];
@@ -47,7 +46,6 @@ if use_covars
     end
 
 end
-
 
 
 % Octree for model data
@@ -121,7 +119,7 @@ for iter = 1:maxiter
     % Apply the new transformation to the transform
     qt = rigid_multiply(dqt, qt);
     
-    mse_n = mean(sum((B-A).^2));
+    mse_n = mean(sum((B_corr-A).^2));
     if verbose
         fprintf('Iter %d MSE %g\n',iter, mse_n);
     end

@@ -18,4 +18,5 @@ function experiments()
     posor = {'StartPosition', [0.1170 -1.1503 1.4005], 'StartOrientation', [-0.5709 0.6523 -0.3566 0.3486]};
 
     do_one('icp', 1, 'global');
+
 end
