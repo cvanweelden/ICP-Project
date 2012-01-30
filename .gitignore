@@ -1,9 +1,9 @@
 .DS_Store
 *.ply
 *.m~
-cpp/build
+cpp/build*
 code/config.m
-
+output/*
 code/poep.m
 
 report/report.aux

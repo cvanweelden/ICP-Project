@@ -8,6 +8,7 @@ p.addParamValue('MaxCloudSize',  1e4, @(x)isnumeric(x));
 p.addParamValue('MaxFrames',  inf, @(x)isnumeric(x));
 p.addParamValue('StartPosition', [0 0 0], @(x)isnumeric(x) && numel(x) == 3);
 p.addParamValue('StartOrientation', [1 0 0 0], @(x)isnumeric(x) && numel(x) == 4);
+p.addParamValue('FrameSkip', 1, @(x)isnumeric(x));
 p.addParamValue('GICPArgs', {});
 p.parse(varargin{:});
 
@@ -15,6 +16,7 @@ modelmode = p.Results.ModelMode;
 cloudsize = p.Results.MaxCloudSize;
 gicpargs = p.Results.GICPArgs;
 maxframes = p.Results.MaxFrames;
+frameskip = p.Results.FrameSkip;
 
 mkdir(output_dir);
 mkdir(fullfile(output_dir,'frames'));
@@ -38,7 +40,7 @@ results.transformations{1} = qt;
 results.pose{1} = qt;
 results.timestamp{1} = model.timestamp;
 
-for i = 2:min(pcs.num_frames, maxframes)
+for i = 2:frameskip:min(pcs.num_frames, maxframes)
     fprintf('Aligning frame %i\n', i);
     
     % Compute normals for the model (TODO: here?)
@@ -79,8 +81,8 @@ for i = 2:min(pcs.num_frames, maxframes)
 end
 
 results.avg_mse = results.avg_mse / (pcs.num_frames-1);
-save(fullfile(output_dir, 'results.mat'), 'results');
 
+save(fullfile(output_dir, 'results_latest.mat'), 'results');
 write_trajectory(results, fullfile(output_dir, 'trajectory.txt'));
 
 clear('icp');
