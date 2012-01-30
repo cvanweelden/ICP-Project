@@ -23,8 +23,7 @@ method = p.Results.Method;
 
 
 A = frame.xyz;
-Bo = model.xyz;
-B = Bo;
+B = model.xyz;
 
 use_covars = strcmpi(method, 'gicp') || strcmpi(method, 'wsm');
 
@@ -49,7 +48,7 @@ end
 
 
 % Octree for model data
-tree = kdtree_build(Bo');
+tree = kdtree_build(B');
 NB = zeros(size(A,2),1);
 
 
@@ -87,7 +86,7 @@ for iter = 1:maxiter
     end
     
     % Reorder B and corresponding covariance matrices
-    B_corr = Bo(:, NB);
+    B_corr = B(:, NB);
     A_corr = A;
     
     %Filter out non-correspondences according to max distance.
@@ -97,7 +96,7 @@ for iter = 1:maxiter
 
     % Reorder and filter the covariance matrices
     if use_covars
-        Cb_corr = Cbo(:, :, NB);
+        Cb_corr = Cb(:, :, NB);
         Ca_corr = Ca;
         Cb_corr(:,:,mask) = [];
         Ca_corr(:,:,mask) = [];    
