@@ -21,29 +21,39 @@ e = p.Results.CovarEpsilon;
 verbose = p.Results.Verbose;
 method = p.Results.Method;
 
+
 A = frame.xyz;
 Bo = model.xyz;
 B = Bo;
-Nu = frame.normals;
-Mu = model.normals;
+
+use_covars = strcmpi(method, 'gicp') || strcmpi(method, 'wsm');
+
+if use_covars
+    model.computenormals();
+    frame.computenormals();
+    
+    % Precompute covariances ( see [1] Section III.B )
+    C = [e 0 0;
+         0 1 0;
+         0 0 1];
+    Ca = zeros(3,3,size(A,2));
+    Cbo = zeros(3,3,size(A,2));
+    Cb = Cbo;
+    for i=1:size(B,2)
+        Rmu = [model.normals(:,i) [0 1 0]' [0 0 1]'];
+        Rnu = [frame.normals(:,i) [0 1 0]' [0 0 1]'];
+        Cb(:,:,i) = Rmu * C * Rmu';
+        Ca(:,:,i) = Rnu * C * Rnu';
+    end
+
+end
+
+
 
 % Octree for model data
 tree = kdtree_build(Bo');
 NB = zeros(size(A,2),1);
 
-% Precompute covariances ( see [1] Section III.B )
-C = [e 0 0;
-     0 1 0;
-     0 0 1];
-Ca = zeros(3,3,size(A,2));
-Cbo = zeros(3,3,size(A,2));
-Cb = Cbo;
-for i=1:size(B,2)
-    Rmu = [Mu(:,i) [0 1 0]' [0 0 1]'];
-    Rnu = [Nu(:,i) [0 1 0]' [0 0 1]'];
-    Cb(:,:,i) = Rmu * C * Rmu';
-    Ca(:,:,i) = Rnu * C * Rnu';
-end
 
 % The cost function we'll try to minimize: (2) in [1]
     function c = cost(Tp)
@@ -80,16 +90,20 @@ for iter = 1:maxiter
     
     % Reorder B and corresponding covariance matrices
     B_corr = Bo(:, NB);
-    Cb_corr = Cbo(:, :, NB);
     A_corr = A;
-    Ca_corr = Ca;
     
     %Filter out non-correspondences according to max distance.
     mask = sqrt(sum((A_corr - B_corr).^2)) > d_max;
     B_corr(:,mask) = [];
-    Cb_corr(:,:,mask) = [];
     A_corr(:,mask) = [];
-    Ca_corr(:,:,mask) = [];    
+
+    % Reorder and filter the covariance matrices
+    if use_covars
+        Cb_corr = Cbo(:, :, NB);
+        Ca_corr = Ca;
+        Cb_corr(:,:,mask) = [];
+        Ca_corr(:,:,mask) = [];    
+    end
     
     % Compute the new transformation
     % As [1] mentions, there is no closed-form solution anymore

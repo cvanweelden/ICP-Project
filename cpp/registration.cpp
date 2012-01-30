@@ -45,12 +45,24 @@ int main (int argc, char** argv)
     getfiles(dir, files, ".ply");
     std::cout << "Reading " << files[1] << endl;
 
-    sensor_msgs::PointCloud2::Ptr cloud (new sensor_msgs::PointCloud2 ());
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+	
+	// if (pcl::io::loadPLYFile<pcl::PointXYZRGBA> (dir + "/" + files[1], *cloud) == -1) //* load the file
+	// {
+	//     PCL_ERROR ("Couldn't read file \n");
+	//     return (-1);
+	// }
+	sensor_msgs::PointCloud2 cloud_blob;
+	pcl::io::loadPLYFile (dir + "/" + files[0], cloud_blob);
+		
+	pcl::fromROSMsg (cloud_blob, *cloud);
     
-    pcl::PLYReader reader;
-    reader.read(dir + "/" + files[1], *cloud);
-    
+    // pcl::PLYReader reader;
+    // reader.read(dir + "/" + files[1], *cloud);
+	    
     std::cout << "Read " << cloud->width * cloud ->height << " points." << endl;
+    for (size_t i = 0; i < cloud->points.size (); ++i)
+	  printf("%.3f %.3f %.3f %x\n", cloud->points[i].x, cloud->points[i].y, cloud->points[i].z, cloud->points[i].rgb);
   // sensor_msgs::PointCloud2::Ptr cloud (new sensor_msgs::PointCloud2 ());
   //   sensor_msgs::PointCloud2::Ptr cloud_filtered (new sensor_msgs::PointCloud2 ());
   // 
