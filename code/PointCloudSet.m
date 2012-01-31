@@ -13,6 +13,9 @@ classdef PointCloudSet < handle
             obj.depth_files = dir(fullfile(data_dir, 'depth', '*.png'));
             obj.rgb_files = dir(fullfile(data_dir, 'rgb', '*.png'));
             obj.num_frames = numel(obj.depth_files);
+            if obj.num_frames == 0
+                disp('No frames found in dir.');
+            end
         end
         
         function B = subsref(obj,s)

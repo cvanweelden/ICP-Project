@@ -21,28 +21,35 @@ e = p.Results.CovarEpsilon;
 verbose = p.Results.Verbose;
 method = p.Results.Method;
 
-A_frame = frame.copy();
-A = A_frame.xyz;
+
+A = frame.xyz;
 B = model.xyz;
-Nu = A_frame.normals;
-Mu = model.normals;
+
+use_covars = strcmpi(method, 'gicp') || strcmpi(method, 'wsm');
+
+if use_covars
+    model.computenormals();
+    frame.computenormals();
+    
+    % Precompute covariances ( see [1] Section III.B )
+    C = [e 0 0;
+         0 1 0;
+         0 0 1];
+    Ca = zeros(3,3,size(A,2));
+    Cb = zeros(3,3,size(A,2));
+    for i=1:size(B,2)
+        Rmu = [model.normals(:,i) [0 1 0]' [0 0 1]'];
+        Rnu = [frame.normals(:,i) [0 1 0]' [0 0 1]'];
+        Cb(:,:,i) = Rmu * C * Rmu';
+        Ca(:,:,i) = Rnu * C * Rnu';
+    end
+
+end
+
 
 % Octree for model data
 tree = kdtree_build(B');
 NB = zeros(size(A,2),1);
-
-% Precompute covariances ( see [1] Section III.B )
-C = [e 0 0;
-     0 1 0;
-     0 0 1];
-Ca = zeros(3,3,size(A,2));
-Cb = zeros(3,3,size(A,2));
-for i=1:size(B,2)
-    Rmu = [Mu(:,i) [0 1 0]' [0 0 1]'];
-    Rnu = [Nu(:,i) [0 1 0]' [0 0 1]'];
-    Cb(:,:,i) = Rmu * eye(3) * Rmu';
-    Ca(:,:,i) = Rnu * zeros(3) * Rnu';
-end
 
 % The cost function we'll try to minimize: (2) in [1]
     function c = cost(Tp)
@@ -78,17 +85,21 @@ for iter = 1:maxiter
     end
     
     % Reorder B and corresponding covariance matrices
-    B_corr = B(:,NB);
-    Cb_corr = Cb(:, :, NB);
+    B_corr = B(:, NB);
     A_corr = A;
-    Ca_corr = Ca;
     
     %Filter out non-correspondences according to max distance.
     mask = sqrt(sum((A_corr - B_corr).^2)) > d_max;
     B_corr(:,mask) = [];
-    Cb_corr(:,:,mask) = [];
     A_corr(:,mask) = [];
-    Ca_corr(:,:,mask) = [];    
+
+    % Reorder and filter the covariance matrices
+    if use_covars
+        Cb_corr = Cb(:, :, NB);
+        Ca_corr = Ca;
+        Cb_corr(:,:,mask) = [];
+        Ca_corr(:,:,mask) = [];    
+    end
     
     % Compute the new transformation
     % As [1] mentions, there is no closed-form solution anymore
@@ -101,23 +112,12 @@ for iter = 1:maxiter
     end
     
     % Apply the new transformation to the point cloud
-%     A = rigid_transform(dqt, A);
-    A_frame.apply_qt(dqt);
-    A = A_frame.xyz;
-    Nu = A_frame.normals;
-    for i=1:size(B,2)
-        Rnu = [Nu(:,i) [0 1 0]' [0 0 1]'];
-        Ca(:,:,i) = Rnu * C * Rnu';
-    end    
-%     dR = quat2rot(quatnormalize(dqt(1:4)));
-%     for i = 1:size(Ca,3)
-%         Ca(:,:,i) = dR * Ca(:,:,i) * dR';
-%     end
+    A = rigid_transform(dqt, A);
     
     % Apply the new transformation to the transform
     qt = rigid_multiply(dqt, qt);
     
-    mse_n = mean(sum((B(:,NB)-A).^2));
+    mse_n = mean(sum((B_corr-A).^2));
     if verbose
         fprintf('Iter %d MSE %g\n',iter, mse_n);
     end
