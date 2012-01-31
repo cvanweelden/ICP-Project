@@ -86,7 +86,7 @@ classdef PointCloud < handle
         function apply_qt(obj, qt)
             % Apply a quaternion+translation transformation
             obj.xyz = rigid_transform(qt, obj.xyz);
-            end
+        end
         
         function subsample(obj, k)
             % Subsample randomly to k points
