@@ -37,7 +37,9 @@ results.transformations{1} = qt;
 results.pose{1} = qt;
 results.timestamp{1} = model.timestamp;
 
-for i = 2:frameskip:min(pcs.num_frames, maxframes)
+ii = 2:frameskip:min(pcs.num_frames, maxframes);
+for j = 1:numel(ii)
+    i = ii(j);
     fprintf('Aligning frame %i\n', i);
     
     % Compute normals for the model (TODO: here?)
@@ -50,12 +52,13 @@ for i = 2:frameskip:min(pcs.num_frames, maxframes)
     % Call the ICP method and save the results.
     [dqt mse_profile] = gicp(frame, model, gicpargs{:});
     qt = rigid_multiply(dqt, qt);
+    
     results.avg_mse = results.avg_mse + mse_profile(end);
-    results.mse_profile{i} = mse_profile;
-    results.num_iter(i) = numel(mse_profile);
-    results.transformations{i} = dqt;
-    results.pose{i} = qt;
-    results.timestamp{i} = frame.timestamp;
+    results.mse_profile{j} = mse_profile;
+    results.num_iter(j) = numel(mse_profile);
+    results.transformations{j} = dqt;
+    results.pose{j} = qt;
+    results.timestamp{j} = frame.timestamp;
     
     % Write the new frame
     frame.apply_qt(dqt);

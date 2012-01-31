@@ -4,7 +4,8 @@ function experiments()
 
     function results = do_one(method, frameskip, modelmode)
         fn = [method '_' num2str(frameskip) '_' modelmode];
-        results = do_registration(dataset, fullfile(output_dir, fn), cs{:}, ...%posor{:},...
+        results = do_registration(dataset, fullfile(output_dir, fn), ...
+                    'MaxCloudSize',1e5, ...
                     'MaxFrames', 500, ...
                     'ModelMode', modelmode, ...
                     'GICPArgs', {'Method', method, 'MaxIterations', 100},...
@@ -14,10 +15,19 @@ function experiments()
 
     dataset = fullfile(DATA_PATH, 'rgbd_dataset_freiburg2_xyz');
     output_dir = fullfile(DROPBOX_PATH, 'results');
-    cs = {'MaxCloudSize', 1e4};
-    posor = {'StartPosition', [0.1170 -1.1503 1.4005], 'StartOrientation', [-0.5709 0.6523 -0.3566 0.3486]};
 
     do_one('icp', 1, 'global');
+    do_one('icp', 2, 'global');
+    do_one('icp', 4, 'global');
+    do_one('icp', 8, 'global');
+    do_one('icp', 16, 'global');
+
+
+    do_one('icp', 1, 'previous');
+    do_one('icp', 2, 'previous');
+    do_one('icp', 4, 'previous');
+    do_one('icp', 8, 'previous');
+    do_one('icp', 16, 'previous');
 
 
 end

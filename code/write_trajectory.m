@@ -5,7 +5,7 @@ function write_trajectory( results, filename )
 
 f = fopen(filename, 'w');
 
-for i = 1:size(results.pose, 2)
+for i = 1:numel(results.timestamp)
     fprintf(f, '%s %f %f %f %f %f %f %f\n', results.timestamp{i}, results.pose{i}(5:7), results.pose{i}(1:4)); 
 end
 
