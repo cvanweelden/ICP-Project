@@ -40,8 +40,8 @@ Cb = zeros(3,3,size(A,2));
 for i=1:size(B,2)
     Rmu = [Mu(:,i) [0 1 0]' [0 0 1]'];
     Rnu = [Nu(:,i) [0 1 0]' [0 0 1]'];
-    Cb(:,:,i) = Rmu * C * Rmu';
-    Ca(:,:,i) = Rnu * C * Rnu';
+    Cb(:,:,i) = Rmu * eye(3) * Rmu';
+    Ca(:,:,i) = Rnu * zeros(3) * Rnu';
 end
 
 % The cost function we'll try to minimize: (2) in [1]
