@@ -79,7 +79,9 @@ AT = A;
 last_mse = inf;
 mse_profile = [];
 
+
 for iter = 1:maxiter
+        
 
     A_idx = 1:size(A,2); % A used indexes (so we can filter)
     B_idx = 1:size(B,2); % B used indexes (NB)
@@ -117,7 +119,7 @@ for iter = 1:maxiter
     end
     
     AT = rigid_transform(qt, A);
-    mse = mean((B(:, B_idx)-AT(:,A_idx)).^2);
+    mse = mean(sum((B(:, B_idx)-AT(:,A_idx)).^2));
     
     if verbose
         fprintf('Iter %d MSE %g\n',iter, mse);
