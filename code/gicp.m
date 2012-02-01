@@ -72,7 +72,6 @@ tree = kdtree_build(B');
 % This is [q(1) q(2) q(3) q(4) t(1) t(2) t(3)]
 
 qt = [1 0 0 0 0 0 0];
-AT = A;
 
 %Run the ICP loop until difference in MSE is < msethresh
 
@@ -86,6 +85,8 @@ for iter = 1:maxiter
     A_idx = 1:size(A,2); % A used indexes (so we can filter)
     B_idx = 1:size(B,2); % B used indexes (NB)
     
+    AT = rigid_transform(qt, A);
+    
     % Find closest points
     for i = 1:size(A,2)
         B_idx(i) = kdtree_k_nearest_neighbors(tree, AT(:,i)', 1);
@@ -93,13 +94,27 @@ for iter = 1:maxiter
     
     d = sum((B(:, B_idx)-AT).^2);
     
+    mse = mean(d);
+    mse_profile(iter) = mse; %#ok<AGROW>
+    
+    % Break if done
+    if maxiter == 1 || strcmpi(method,'icp') && (abs(mse - last_mse) < msethresh)
+        break
+    end
+        
+    if verbose
+        fprintf('Iter %d MSE %g\n',iter, mse);
+    end
+
+    
     % Filter the percentage of closest points
     if overlap < 1
         [~,idx] = sort(d);
         idx = idx(1:double(numel(idx)*overlap));
+        
         A_idx = A_idx(idx);
         B_idx = B_idx(idx);
-        fprintf('Filtering for %.0f%% overlap. %d points left.\n',overlap*100,numel(idx));
+        fprintf('Filtering for %.0f%% overlap. %d points left. (Cutoff at %.6f)\n',overlap*100,numel(idx),d(idx(end)));
     %Filter out non-correspondences according to max distance.
     elseif d_max < inf
         mask = d < d_max;
@@ -117,20 +132,7 @@ for iter = 1:maxiter
     elseif (strcmpi(method, 'icp'))
         qt = get_transformation(A(:,A_idx), B(:,B_idx));
     end
-    
-    AT = rigid_transform(qt, A);
-    mse = mean(sum((B(:, B_idx)-AT(:,A_idx)).^2));
-    
-    if verbose
-        fprintf('Iter %d MSE %g\n',iter, mse);
-    end
-    
-    mse_profile(iter) = mse; %#ok<AGROW>
-    
-    % Break if done
-    if strcmpi(method,'icp') && (abs(mse - last_mse) < msethresh)
-        break
-    end
+
     
     last_mse = mse;
     

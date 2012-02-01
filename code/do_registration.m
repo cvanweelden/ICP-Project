@@ -52,11 +52,11 @@ for j = 1:numel(ii)
     % Call the ICP method and save the results.
     [dqt mse_profile] = gicp(frame, model, gicpargs{:});
     qt = rigid_multiply(dqt, qt);
-    dt = [quat2dcm(dqt(1:4))' dqt(5:7)'; 0 0 0 1];
-    T = dt * T;
+    dT = [quat2dcm(dqt(1:4))' dqt(5:7)'; 0 0 0 1];
+    T = dT * T;
     
     % Write the new frame
-    frame.apply_matrix(dt);
+    frame.apply_matrix(dT);
     frame.write(fullfile(output_dir, 'frames', sprintf('frame%d.ply',i)));
     
     results.avg_mse = results.avg_mse + mse_profile(end);
