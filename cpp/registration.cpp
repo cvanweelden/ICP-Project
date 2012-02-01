@@ -27,12 +27,12 @@
 
 using namespace std;
 
-const float VOXEL_GRID_SIZE = 0.01; 
-const double NORMALS_RADIUS = 0.03; 
-const double FEATURES_RADIUS = 0.08; 
-const double SAC_MAX_CORRESPONDENCE_DIST = 1; 
-const double SAC_MIN_SAMPLE_DIST = 0.01;
-const int SAC_MAX_ITERATIONS = 50;
+const float VOXEL_GRID_SIZE = 0.05; 
+const double NORMALS_RADIUS = 0.1; 
+const double FEATURES_RADIUS = 0.5; 
+const double SAC_MAX_CORRESPONDENCE_DIST = 0.1; 
+const double SAC_MIN_SAMPLE_DIST = 0.5;
+const int SAC_MAX_ITERATIONS = 1000;
 
 bool hasEnding (std::string const &fullString, std::string const &ending)
 {
@@ -118,11 +118,25 @@ int main (int argc, char** argv)
 	outlier_filter.filter (*model);
 	downsample_filter.setInputCloud (model);
 	downsample_filter.filter (*model);
+	
+	//Write the model
+	uint8_t tmp;
+	for (size_t j=0; j < model->points.size(); j++) {
+		pcl::PointXYZRGB *p = &model->points[j];
+		// unpack rgb into r/g/b
+		uint32_t rgb = *reinterpret_cast<int*>(&p->rgb);
+		uint8_t b = (rgb >> 16) & 0x0000ff;
+		uint8_t g = (rgb >> 8)  & 0x0000ff;
+		uint8_t r = (rgb)       & 0x0000ff;
+		// pack r/g/b into rgb
+		rgb = ((uint32_t)r << 16 | (uint32_t)g << 8 | (uint32_t)b);
+		p->rgb = *reinterpret_cast<float*>(&rgb);
+	}
 	pcl::io::savePLYFileBinary<pcl::PointXYZRGB>(files[0].substr(0,files[0].size()-4) + "_alligned.ply", *model);
 	
 	//Registration loop
 	for (size_t i=1; i<files.size(); i++) {
-		std::cout << "Current transformation: " << current_transform << std::endl;
+		std::cout << "Current transformation: " << endl << current_transform << std::endl;
 		
 		std::cout << "Reading " << files[i] << endl;
 		//Load and filter the incoming frames
@@ -162,7 +176,7 @@ int main (int argc, char** argv)
 		std::cout << "Done! MSE: " << sac_ia.getFitnessScore() << endl;
 		
 		//Get the transformation
-		Eigen::Matrix4f final_transformation = sac_ia.getFinalTransformation();
+		Eigen::Matrix4f transformation = sac_ia.getFinalTransformation();
 		
 		//std::cout << "Refining allignment of " << files[i] << endl;
 		//Set the ICP parameters
@@ -184,12 +198,25 @@ int main (int argc, char** argv)
 		//Some debug printing
 		//std::cout << "has converged:" << icp.hasConverged() << " score: " <<
 		//icp.getFitnessScore() << std::endl;
-		std::cout << "Found transformation: " << final_transformation << std::endl;
+		std::cout << "Found transformation: " << endl << transformation << std::endl;
 		
-		current_transform = current_transform * final_transformation;
+		current_transform = current_transform * transformation;
 		
 		//Write the alligned frame
+		uint8_t tmp;
+		for (size_t j=0; j < alligned_frame.points.size(); j++) {
+			pcl::PointXYZRGB *p = &alligned_frame.points[j];
+			// unpack rgb into r/g/b
+			uint32_t rgb = *reinterpret_cast<int*>(&p->rgb);
+			uint8_t b = (rgb >> 16) & 0x0000ff;
+			uint8_t g = (rgb >> 8)  & 0x0000ff;
+			uint8_t r = (rgb)       & 0x0000ff;
+			// pack r/g/b into rgb
+			rgb = ((uint32_t)r << 16 | (uint32_t)g << 8 | (uint32_t)b);
+			p->rgb = *reinterpret_cast<float*>(&rgb);
+		}
 		pcl::io::savePLYFileBinary<pcl::PointXYZRGB>(files[i].substr(0,files[i].size()-4) + "_alligned.ply", alligned_frame);
+		
 		
 		*model = alligned_frame;
 	}
