@@ -25,6 +25,8 @@ pcs = PointCloudSet(input_dir);
 
 %Write the first frame with the initial pose.
 qt = [p.Results.StartOrientation p.Results.StartPosition];
+T = eye(4);
+
 model = pcs{1};
 model.subsample(cloudsize);
 model.apply_qt(qt); 
@@ -40,18 +42,22 @@ results.timestamp{1} = model.timestamp;
 ii = 2:frameskip:min(pcs.num_frames, maxframes);
 for j = 1:numel(ii)
     i = ii(j);
-    fprintf('Aligning frame %i\n', i);
-    
-    % Compute normals for the model (TODO: here?)
-    
+    fprintf('\n=== ALIGNING FRAME %i ===\n\n', i);
+        
     % Load up a new frame
     frame = pcs{i};
     frame.subsample(cloudsize);
-    frame.apply_qt(qt);
+    frame.apply_matrix(T);
     
     % Call the ICP method and save the results.
     [dqt mse_profile] = gicp(frame, model, gicpargs{:});
     qt = rigid_multiply(dqt, qt);
+    dt = [quat2dcm(dqt(1:4))' dqt(5:7)'; 0 0 0 1];
+    T = dt * T;
+    
+    % Write the new frame
+    frame.apply_matrix(dt);
+    frame.write(fullfile(output_dir, 'frames', sprintf('frame%d.ply',i)));
     
     results.avg_mse = results.avg_mse + mse_profile(end);
     results.mse_profile{j} = mse_profile;
@@ -60,13 +66,9 @@ for j = 1:numel(ii)
     results.pose{j} = qt;
     results.timestamp{j} = frame.timestamp;
     
-    % Write the new frame
-    frame.apply_qt(dqt);
-    frame.write(fullfile(output_dir, 'frames', sprintf('frame%d.ply',i)));
-    
     % Update the model
     if strcmpi(modelmode, 'global')
-       model = [model frame]; %#ok<AGROW>
+        model = [model frame]; %#ok<AGROW>
     else
         model = frame;
     end
