@@ -10,3 +10,9 @@ add_definitions(${PCL_DEFINITIONS})
 
 add_executable (openni_grabber openni_grabber.cpp)
 target_link_libraries (openni_grabber ${PCL_LIBRARIES})
+
+add_executable (pcd2ply pcd2ply.cpp)
+target_link_libraries (pcd2ply ${PCL_LIBRARIES})
+
+add_executable (cloud_viewer cloud_viewer.cpp)
+target_link_libraries (cloud_viewer ${PCL_LIBRARIES})
