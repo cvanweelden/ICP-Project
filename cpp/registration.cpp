@@ -22,6 +22,8 @@
 
 #include "pcl/kdtree/kdtree_flann.h"
 
+#include <Eigen/Geometry>
+
 
 //#include <pcl/registration/gicp.h> Broken in 1.4.0: http://www.pcl-users.org/GICP-in-PCL-1-4-td3635906.html
 
@@ -136,7 +138,16 @@ int main (int argc, char** argv)
 	
 	//Registration loop
 	for (size_t i=1; i<files.size(); i++) {
+		
 		std::cout << "Current transformation: " << endl << current_transform << std::endl;
+		
+		//Get quaternion plus translation vector pose notation from current_transform
+		Eigen::Matrix3f rotation = current_transform.block(0,0,2,2);
+		Eigen::Quaternionf q(rotation);
+		Eigen::Vector3f t = current_transform.block(0,3,2,3);
+		
+		std::cout << "As quaternion: [" << q.w() << " " << q.x() << " " << q.y() << " " << q.z() << "]" << endl;
+		std::cout << "with translation vector: " << endl << t << endl;
 		
 		std::cout << "Reading " << files[i] << endl;
 		//Load and filter the incoming frames
@@ -218,7 +229,9 @@ int main (int argc, char** argv)
 		pcl::io::savePLYFileBinary<pcl::PointXYZRGB>(files[i].substr(0,files[i].size()-4) + "_alligned.ply", alligned_frame);
 		
 		
-		*model = alligned_frame;
+		*model = *model + alligned_frame;
+		downsample_filter.setInputCloud (model);
+		downsample_filter.filter (*model);
 	}
 	    
     
