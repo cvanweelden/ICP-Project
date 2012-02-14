@@ -2,8 +2,8 @@
 clear
 config
 
-frameskip  = 10;
-max_frames = 100;
+frameskip  = 20;
+max_frames = 400;
 cloudsize  = 10000;
 
 ds = PointCloudSet( fullfile(DATA_PATH, 'rgbd_dataset_freiburg1_xyz') );
