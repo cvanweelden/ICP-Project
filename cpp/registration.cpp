@@ -24,18 +24,14 @@
 
 #include <Eigen/Geometry>
 
+#include "registration.h"
 
 //#include <pcl/registration/gicp.h> Broken in 1.4.0: http://www.pcl-users.org/GICP-in-PCL-1-4-td3635906.html
 
 using namespace std;
+using namespace pcl;
 
-const float VOXEL_GRID_SIZE = 0.05; 
-const double NORMALS_RADIUS = 0.1; 
-const double FEATURES_RADIUS = 0.5; 
-const double SAC_MAX_CORRESPONDENCE_DIST = 0.1; 
-const double SAC_MIN_SAMPLE_DIST = 0.5;
-const int SAC_MAX_ITERATIONS = 1000;
-
+/*
 bool hasEnding (std::string const &fullString, std::string const &ending)
 {
     if (fullString.length() >= ending.length()) {
@@ -61,15 +57,13 @@ int getfiles (string dir, vector<string> &files, string const &extension)
     closedir(dp);
     return 0;
 }
-
-pcl::PointCloud<pcl::FPFHSignature33>::Ptr getFeatures( pcl::PointCloud<pcl::PointXYZRGB>::Ptr
-												  cloud, pcl::PointCloud<pcl::Normal>::Ptr normals ) {
-	
-	pcl::PointCloud<pcl::FPFHSignature33>::Ptr features =
-	pcl::PointCloud<pcl::FPFHSignature33>::Ptr (new pcl::PointCloud<pcl::FPFHSignature33>);
-	pcl::search::KdTree<pcl::PointXYZRGB>::Ptr search_method_ptr =
-	pcl::search::KdTree<pcl::PointXYZRGB>::Ptr (new pcl::search::KdTree<pcl::PointXYZRGB>);
-	pcl::FPFHEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::FPFHSignature33> fpfh_est;
+*/
+ 
+PointCloud<FPFHSignature33>::Ptr getFeaturesFPFH( PointCloud<PointXYZRGB>::Ptr cloud, PointCloud<Normal>::Ptr normals )
+{	
+	PointCloud<FPFHSignature33>::Ptr features = PointCloud<FPFHSignature33>::Ptr (new PointCloud<FPFHSignature33>);
+	search::KdTree<pcl::PointXYZRGB>::Ptr search_method_ptr = search::KdTree<PointXYZRGB>::Ptr (new search::KdTree<PointXYZRGB>);
+	FPFHEstimation<PointXYZRGB, Normal, FPFHSignature33> fpfh_est;
 	fpfh_est.setInputCloud( cloud );
 	fpfh_est.setInputNormals( normals );
 	fpfh_est.setSearchMethod( search_method_ptr );
@@ -78,17 +72,99 @@ pcl::PointCloud<pcl::FPFHSignature33>::Ptr getFeatures( pcl::PointCloud<pcl::Poi
 	return features;
 }
 
-pcl::PointCloud<pcl::Normal>::Ptr getNormals( pcl::PointCloud<pcl::PointXYZRGB>::Ptr incloud ) {
-	
-	pcl::PointCloud<pcl::Normal>::Ptr normalsPtr = pcl::PointCloud<pcl::Normal>::Ptr (new
-																  pcl::PointCloud<pcl::Normal>);
-	pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> norm_est;
+PointCloud<Normal>::Ptr getNormals( PointCloud<PointXYZRGB>::Ptr incloud )
+{	
+	PointCloud<Normal>::Ptr normalsPtr = PointCloud<Normal>::Ptr (new PointCloud<Normal>);
+	NormalEstimation<PointXYZRGB, Normal> norm_est;
 	norm_est.setInputCloud( incloud );
 	norm_est.setRadiusSearch( NORMALS_RADIUS );
 	norm_est.compute( *normalsPtr );
 	return normalsPtr;
 }
 
+PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype, float downsample_size)
+{
+	PointCloud<PointXYZRGB>::Ptr frame (new PointCloud<PointXYZRGB>);
+	
+	//Read the pointcloud from file
+	if ( filetype == ".ply") {
+		if (io::loadPLYFile<PointXYZRGB>(filepath, *frame) == -1) {
+			PCL_ERROR ("Couldn't read file\n");
+		}
+	} else if ( filetype == ".pcd") {
+		if (io::loadPCDFile<PointXYZRGB>(filepath, *frame) == -1) {
+			PCL_ERROR ("Couldn't read file\n");
+		}
+	}
+	
+	// Remove outliers
+	StatisticalOutlierRemoval<PointXYZRGB> outlier_filter;
+	outlier_filter.setMeanK (50);
+	outlier_filter.setStddevMulThresh (1.0);
+	outlier_filter.setInputCloud (frame);
+	outlier_filter.filter (*frame);
+	
+	// Downsample using voxelgrid
+	VoxelGrid<PointXYZRGB> downsample_filter;
+	downsample_filter.setLeafSize (downsample_size, downsample_size, downsample_size);
+	downsample_filter.setInputCloud (frame);
+	downsample_filter.filter (*frame);
+	
+	return frame;
+}
+
+Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame, PointCloud<PointXYZRGB>::Ptr model )
+{
+	//Compute normals
+	PointCloud<Normal>::Ptr model_normals = getNormals( model );
+	PointCloud<Normal>::Ptr frame_normals = getNormals( frame );
+	
+	//Compute FPFH features
+	PointCloud<FPFHSignature33>::Ptr model_features= getFeaturesFPFH( model, model_normals );
+	PointCloud<FPFHSignature33>::Ptr frame_features= getFeaturesFPFH( frame, frame_normals );
+	
+	//Allign the new frame using FPFH features and RANSAC
+	SampleConsensusInitialAlignment<PointXYZRGB, PointXYZRGB, FPFHSignature33> sac_ia;
+	sac_ia.setInputCloud( frame );
+	sac_ia.setSourceFeatures( frame_features );
+	sac_ia.setInputTarget( model );
+	sac_ia.setTargetFeatures( model_features );
+	sac_ia.setMaxCorrespondenceDistance( SAC_MAX_CORRESPONDENCE_DIST );
+	sac_ia.setMinSampleDistance( SAC_MIN_SAMPLE_DIST );
+	//sac_ia.setMaximumIterations( SAC_MAX_ITERATIONS );
+	sac_ia.align( *frame );
+	std::cout << "Done! MSE: " << sac_ia.getFitnessScore() << endl;
+	
+	//Get the transformation
+	Eigen::Matrix4f transformation = sac_ia.getFinalTransformation();
+	
+	//std::cout << "Refining allignment of " << files[i] << endl;
+	//Set the ICP parameters
+	//pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+	//pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+	//icp.setMaxCorrespondenceDistance(0.002);
+	//icp.setMaximumIterations(50);
+	//icp.setRANSACOutlierRejectionThreshold(0.01); //default: 0.05m
+	//icp.setRANSACIterations(50);
+	//icp.setTransformationEpsilon(0.001);
+	//icp.setEuclideanFitnessEpsilon(0.001);
+	
+	//Refine the allignment using ICP
+	//icp.setInputCloud(frame);
+	//icp.setInputTarget(model);
+	//icp.align(alligned_frame);
+	//pcl::transformPointCloud(*frame, *frame, current_transform);
+	
+	//Some debug printing
+	//std::cout << "has converged:" << icp.hasConverged() << " score: " <<
+	//icp.getFitnessScore() << std::endl;
+	std::cout << "Found transformation: " << endl << transformation << std::endl;
+	
+	return transformation;
+	
+}
+
+/*
 int main (int argc, char** argv)
 {
 	//Read file list
@@ -164,52 +240,9 @@ int main (int argc, char** argv)
 		//Transform the new frame to the current estimate
 		pcl::transformPointCloud(*frame, *frame, current_transform);
 		
-		//Compute normals
-		pcl::PointCloud<pcl::Normal>::Ptr model_normals = getNormals( model );
-		pcl::PointCloud<pcl::Normal>::Ptr frame_normals = getNormals( frame );
-		
-		//Compute FPFH features
-		pcl::PointCloud<pcl::FPFHSignature33>::Ptr model_features= getFeatures( model, model_normals );
-		pcl::PointCloud<pcl::FPFHSignature33>::Ptr frame_features= getFeatures( frame, frame_normals );
-		
 		std::cout << "Alligning " << files[i] << endl;
-		//Allign the new frame using FPFH features and RANSAC
-		pcl::SampleConsensusInitialAlignment<pcl::PointXYZRGB, pcl::PointXYZRGB,
-		pcl::FPFHSignature33> sac_ia;
-        sac_ia.setInputCloud( frame );
-        sac_ia.setSourceFeatures( frame_features );
-        sac_ia.setInputTarget( model );
-        sac_ia.setTargetFeatures( model_features );
-		sac_ia.setMaxCorrespondenceDistance( SAC_MAX_CORRESPONDENCE_DIST );
-		sac_ia.setMinSampleDistance( SAC_MIN_SAMPLE_DIST );
-        //sac_ia.setMaximumIterations( SAC_MAX_ITERATIONS );
-        sac_ia.align( alligned_frame );
-		std::cout << "Done! MSE: " << sac_ia.getFitnessScore() << endl;
-		
-		//Get the transformation
-		Eigen::Matrix4f transformation = sac_ia.getFinalTransformation();
-		
-		//std::cout << "Refining allignment of " << files[i] << endl;
-		//Set the ICP parameters
-		//pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
-		//pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
-		//icp.setMaxCorrespondenceDistance(0.002);
-		//icp.setMaximumIterations(50);
-		//icp.setRANSACOutlierRejectionThreshold(0.01); //default: 0.05m
-		//icp.setRANSACIterations(50);
-		//icp.setTransformationEpsilon(0.001);
-		//icp.setEuclideanFitnessEpsilon(0.001);
-		
-		//Refine the allignment using ICP
-		//icp.setInputCloud(frame);
-		//icp.setInputTarget(model);
-		//icp.align(alligned_frame);
-		//pcl::transformPointCloud(*frame, *frame, current_transform);
-		
-		//Some debug printing
-		//std::cout << "has converged:" << icp.hasConverged() << " score: " <<
-		//icp.getFitnessScore() << std::endl;
-		std::cout << "Found transformation: " << endl << transformation << std::endl;
+		Eigen::Matrix4f transformation = registerFrame(frame, model);
+		alligned_frame = *frame; //FIXME: remove alligned_frame completely
 		
 		current_transform = current_transform * transformation;
 		
@@ -237,4 +270,4 @@ int main (int argc, char** argv)
     
 
   return (0);
-}
+} */
