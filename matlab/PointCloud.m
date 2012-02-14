@@ -7,11 +7,15 @@ classdef PointCloud < handle
         rgb;
         normals;
         timestamp;
+        depthpath;
+        rgbpath;
     end
     methods
         function obj = PointCloud(depthpath, rgbpath)
             % Constructor
             if nargin >= 2
+                obj.depthpath = depthpath;
+                obj.rgbpath = rgbpath;
                 obj.from_frame(imread(depthpath), imread(rgbpath));
                 % Set timestamp
                 [~, obj.timestamp, ~] = fileparts(depthpath);
@@ -36,6 +40,11 @@ classdef PointCloud < handle
             pc.timestamp = obj.timestamp;
         end
         
+        function [rgb, d] = images(obj)
+            rgb = imread(obj.rgbpath);
+            d = imread(obj.depthpath);
+        end
+        
         function from_frame(obj, depth, varargin)
             % Converts a depthmap (+rgb image) to a pointcloud
              
@@ -48,11 +57,7 @@ classdef PointCloud < handle
             camvar = p.Results.CamVars;
                         
             % Straighten the XYZ coordinates using the camera parameters
-            [I J] = meshgrid(1:size(depth,2), 1:size(depth,1));
-            Z = double(depth) * camvar.ds;
-            X = (I - camvar.cx) .* Z / camvar.fx;
-            Y = (J - camvar.cy) .* Z / camvar.fy;
-            obj.xyz = [X(:)'; Y(:)'; Z(:)'];
+            obj.xyz = reshape(depth2xyz(depth, camvar), [], 3)';
             
             % Set num_points
             obj.n = size(obj.xyz,2);
@@ -68,7 +73,7 @@ classdef PointCloud < handle
             obj.normals = zeros(0, obj.n);
             
             % Filter invalid pixels
-            mask = find(Z ~= 0);
+            mask = find(obj.xyz(3,:) ~= 0);
             obj.xyz = obj.xyz(:,mask);
             obj.rgb = obj.rgb(:,mask);
             
@@ -83,12 +88,12 @@ classdef PointCloud < handle
             obj.xyz = obj.xyz(1:3,:);
         end
         
-        function apply_qt(obj, qt)
+        function obj = apply_qt(obj, qt)
             % Apply a quaternion+translation transformation
             obj.xyz = rigid_transform(qt, obj.xyz);
         end
         
-        function subsample(obj, k)
+        function obj = subsample(obj, k)
             % Subsample randomly to k points
             
             idx = randsample(obj.n, k);
@@ -141,6 +146,8 @@ classdef PointCloud < handle
             for i=1:obj.n
                 fprintf(f, '%f %f %f %d %d %d 0\n', obj.xyz(:,i), obj.rgb(:,i));
             end
+            
+            fprintf(f, '\n');
 
             fclose(f);
         end

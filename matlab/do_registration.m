@@ -45,7 +45,7 @@ for j = 1:numel(ii)
     fprintf('\n=== ALIGNING FRAME %i ===\n\n', i);
         
     % Load up a new frame
-    frame = pcs{i};
+    frame = pcs.cloud{i};
     frame.subsample(cloudsize);
     frame.apply_matrix(T);
     

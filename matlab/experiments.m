@@ -43,13 +43,6 @@ function results = experiments()
 %     do_one('icp', 8, 'previous');
 %     do_one('icp', 16, 'previous');
 
-    pcs = PointCloudSet(dataset);
-    for i=1:pcs.num_frames
-        i
-        pc = pcs{i};
-        pc.subsample(100000);
-        pc.write(fullfile(output_dir,'unaligned',sprintf('frame%03d.ply',i)));
-    end
 
 
 end
