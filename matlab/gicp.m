@@ -11,7 +11,7 @@ p.addParamValue('MSEThreshold',  1e-6, @(x)isnumeric(x));
 p.addParamValue('MaxCorrespondenceDist', 1e-4, @(x)isnumeric(x));
 p.addParamValue('OverlapFraction', 0.8);
 p.addParamValue('CovarEpsilon',  0.01, @(x)isnumeric(x));
-p.addParamValue('Method', 'gicp', @(x)strcmpi(x,'gicp') || strcmpi(x,'wsm') || strcmpi(x,'icp'));
+p.addParamValue('Method', 'icp', @(x)strcmpi(x,'gicp') || strcmpi(x,'wsm') || strcmpi(x,'icp'));
 p.addParamValue('Verbose', true);
 p.parse(varargin{:});
 
@@ -22,6 +22,10 @@ e = p.Results.CovarEpsilon;
 verbose = p.Results.Verbose;
 method = p.Results.Method;
 overlap = p.Results.OverlapFraction;
+
+if frame.n > 10000 || model.n > 10000
+    fprintf('It is probably not wise to attempt ICP with %dx%d points',frame.n, model.n)
+end
 
 A = frame.xyz;
 B = model.xyz;
