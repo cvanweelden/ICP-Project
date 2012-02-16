@@ -105,6 +105,6 @@ if __name__ == '__main__':
         for i,(rgb, d) in enumerate(zip(rgbfiles, depthfiles)):
             if args.n > 0 and i >= args.n:
                 break
-            generate_pointclouds(rgb, d, os.path.join(args.output, 'frame%03d'%i), format=args.format)
+            generate_pointclouds(rgb, d, os.path.join(args.output, os.path.basename(d)), format=args.format)
             
     
