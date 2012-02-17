@@ -1,7 +1,7 @@
 \documentclass[a4paper]{article}
 \usepackage{listings}
 \usepackage{graphicx}
-\usepackage[scale=.7]{geometry}
+%\usepackage[scale=.7]{geometry}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{acronym}
@@ -9,7 +9,6 @@
 \usepackage[usenames, pdftex]{color}
 
 \acrodef{ICP}[ICP]{Iterated Closest Point}
-
 
 \title{Title\\
 {\large Subtitle}}
@@ -30,7 +29,10 @@
 
 \section{Introduction}
 
-In this project we familiarized ourselves with different methods for 3D registration. The availability of cheap RGB+D sensors such as the Kinect could lead to new applications. A Kinect mounted on a moving robot could replace both it's RGB camera and it's range finder. A new application could be affordable 3D reconstructions of the insides of buildings. But in order to make sense of the Kinect's output, we need to perform a registration step; we need to \emph{register} the output of the RGB+D camera, i.e, we need to find the transformation that the camera made in between the captured frames. The robot's odometry can sometimes be used to get an initial estimate of the transformation, but in a scenario where the RGB+D camera is hand-held not even this is possible. For this reason we focused on the registration step only. The combined RGB and depth data forms a ``point cloud'', a set of 3D coordinate points indicating where the sensor measured a solid object. Assuming that there is enough overlap between each pair of consecutive point clouds, we find a good registration by finding an optimal way to fit the two clouds.
+In this project we familiarized ourselves with different methods for 3D registration. The availability of cheap RGB+D sensors such as the Kinect could lead to new applications. A Kinect mounted on a moving robot could replace both it's RGB camera and it's range finder. A new application could be affordable 3D reconstructions of the insides of buildings. But in order to make sense of the Kinect's output, we need to perform a registration step; we need to \emph{register} the output of the RGB+D camera, i.e, we need to find the transformation that the camera made in between the captured frames. The robot's odometry can sometimes be used to get an initial estimate of the transformation, but in a scenario where the RGB+D camera is hand-held not even this is possible. For this reason we focused on the registration step only. 
+
+The combined RGB and depth data forms a ``point cloud'', a set of 3D coordinate points indicating where the sensor measured a solid object. Assuming that there is enough overlap between each pair of consecutive point clouds, we find a good registration by finding an optimal way to fit the two clouds.
+
 
 \section{Background}
 

@@ -124,20 +124,39 @@ void getGroundTruthPose(const double timestamp, const vector<double> &timestamp_
 
 int main (int argc, char** argv)
 {	
-	string usage = "usage: $evaluation <datadir> <groundtruth> <outputfile> [-f <filetype> (default: .ply)] [-m <max_frame_distance> (default: 1)]";
+	string usage = "usage: $evaluation <datadir> <groundtruth> <outputfile> [-t <filetype> (default: .ply)] [-d <max_frame_distance> (default: 1)] [-m <registration_method{NONE,FPFH}> (default: FPFH)] [--no_icp]";
 	
 	int num_args = argc;
 	int max_frame_distance = 1;
 	string filetype = ".ply";
+	Method registration_method = FPFH;
+	bool use_icp = true;
 	
-	for (int i=3; i<argc; i++) {
-		if (argv[i] == "-m") {
+	for (int i=4; i<argc; i++) {
+		if (strcmp(argv[i],"-d") == 0) {
 			max_frame_distance = boost::lexical_cast<int>(argv[i+1]);
 			num_args -= 2;
+			i++;
 		}
-		if (argv[i] == "-f") {
+		else if (strcmp(argv[i],"-t") == 0) {
 			filetype = argv[i+1];
 			num_args -= 2;
+			i++;
+		}
+		else if (strcmp(argv[i],"-m") == 0) {
+			if (strcmp(argv[i+1],"NONE") == 0) {
+				registration_method = NONE;
+			}
+			num_args -= 2;
+			i++;
+		}
+		else if (strcmp(argv[i],"--no_icp") == 0) {
+			use_icp = false;
+			num_args -= 1;
+		}
+		else {
+			cout << "Warning! Unrecognized parameter: " << argv[i] << endl;
+			cout << usage << endl;
 		}
 	}
 	
@@ -146,13 +165,30 @@ int main (int argc, char** argv)
 		return -1;
 	}
 	
+	//Summary message at start
+	cout << "Registration evaluation of frame pairs up to " << max_frame_distance
+	<< " frames apart, using ";
+	if (registration_method == NONE) {
+		cout << "no initial guess";
+	}
+	if (registration_method == FPFH) {
+		cout << "FPFH features for initial guess";
+	}
+	cout << " and ";
+	if (!use_icp) {
+		cout << "no ";
+	}
+	cout << "refinement based on ICP." << endl;
+	
 	//Read the ground truth
+	cout << "Reading ground truth" << endl;
 	vector<double> timestamp_truth;
 	vector<Eigen::Quaternionf> orientation_truth;
 	vector<Eigen::Vector3f> translation_truth;
 	getGroundTruth(argv[2], timestamp_truth, orientation_truth, translation_truth);
 	
 	//Read file list
+	cout << "Reading file list" << endl;
     string dir = argv[1];
     vector<string> files = vector<string>();
 	vector<double> timestamps = vector<double>();
@@ -168,6 +204,7 @@ int main (int argc, char** argv)
 	Eigen::Quaternionf orientation2;
 	Eigen::Vector3f translation2;
 	
+	cout << "Starting registration evaluation" << endl;
 	for (size_t i=0; i<files.size(); i++) {
 		frame1 = loadFrame(files[i], filetype);
 		getGroundTruthPose(timestamps[i], timestamp_truth, orientation_truth, translation_truth,
@@ -179,7 +216,8 @@ int main (int argc, char** argv)
 							   translation_truth, orientation2, translation2);
 			
 
-			Eigen::Matrix4f transformation = registerFrame(frame2, frame1);
+			Eigen::Matrix4f transformation = registerFrame(frame2, frame1, registration_method, use_icp);
+			cout << "Registered frame " << i+offset << " to frame " << i << endl;
 			
 			Eigen::Matrix3f rotation;
 			for (int r=0; r<3; r++) {

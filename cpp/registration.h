@@ -10,7 +10,15 @@ const double SAC_MAX_CORRESPONDENCE_DIST = 0.1;
 const double SAC_MIN_SAMPLE_DIST = 0.5;
 const int SAC_MAX_ITERATIONS = 1000;
 
+enum Method {
+	NONE,
+	FPFH
+};
 
-PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype, float downsample_size=VOXEL_GRID_SIZE);
+PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype, 
+									   float downsample_size=VOXEL_GRID_SIZE);
 
-Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame, PointCloud<PointXYZRGB>::Ptr model );
+Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame, 
+							  PointCloud<PointXYZRGB>::Ptr model,
+							  Method initial_method = FPFH,
+							  bool use_ICP = true);
