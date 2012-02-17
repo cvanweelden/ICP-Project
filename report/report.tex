@@ -6,10 +6,10 @@
 \usepackage{float}
 \usepackage{acronym}
 \usepackage{cite}
-
 \usepackage[usenames, pdftex]{color}
 
-\acronym{ICP}{Iterated Closest Point}
+\acrodef{ICP}[ICP]{Iterated Closest Point}
+
 
 \title{Title\\
 {\large Subtitle}}
@@ -20,24 +20,42 @@
 
 \date{\today}
 
+
+
+
 \begin{document}
 \maketitle
 
+
+
 \section{Introduction}
 
-In this project we familiarized ourselves with different methods for 3D registration. The availability of cheap RGB+D sensors such as the Kinect could lead to new applications. A Kinect mounted on a moving robot could replace both it's RGB camera and it's range finder. However, in order to make sense of the Kinect's output, we need to perform a registration step. A new application could be affordable 3D reconstructions of the insides of buildings. However, for all of these, we need to \emph{register} the output of the RGB+D camera, i.e, we need to find the transformation that the camera made in between the captured frames. The robot's odometry can sometimes be used to get an initial estimate of the transformation, but in scenario where the RGB+D camera is hand-held not even this is possible. The combined RGB and depth data forms a ``point cloud'', a set of 3D coordinate points indicating where the sensor measured a solid object. Assuming that there is enough overlap between each pair of consecutive point clouds, we find a good registration by finding an optimal way to fit the two clouds.
+In this project we familiarized ourselves with different methods for 3D registration. The availability of cheap RGB+D sensors such as the Kinect could lead to new applications. A Kinect mounted on a moving robot could replace both it's RGB camera and it's range finder. A new application could be affordable 3D reconstructions of the insides of buildings. But in order to make sense of the Kinect's output, we need to perform a registration step; we need to \emph{register} the output of the RGB+D camera, i.e, we need to find the transformation that the camera made in between the captured frames. The robot's odometry can sometimes be used to get an initial estimate of the transformation, but in a scenario where the RGB+D camera is hand-held not even this is possible. For this reason we focused on the registration step only. The combined RGB and depth data forms a ``point cloud'', a set of 3D coordinate points indicating where the sensor measured a solid object. Assuming that there is enough overlap between each pair of consecutive point clouds, we find a good registration by finding an optimal way to fit the two clouds.
 
 \section{Background}
 
 \subsection{ICP Based Registration}
 
-% Talk about articles that use pure ICP.
+The basic method used in almost every approach to 3D registration is \ac{ICP}\cite{besl1992method}, it is an expectation maximization method that iteratively minimizes the distance between each point and it's closest neighbor. Though \ac{ICP} is currently used mostly as a refinement step for more advanced algorithms, there are still some papers describing experiments where using \ac{ICP} as the main registration procedure has been successful [[WHICH]]. 
+
+In \cite{segal2009generalized}, an extension to \ac{ICP} was introduced that takes into account the local characteristics of the matched points. This Generalized-ICP gives a higher weight to point correspondence errors if they are in a direction perpendicular to the estimated plane. It is mentioned in both \cite{rusinkiewicz2001efficient} and \cite{segal2009generalized} that using this extension prevents the application of a closed-form solution to the minimization step.
+
 Weighted scan matching removes a simplyfying assumption from ICP, namely that ``the range scans of different poses sample the environment's boundary at \emph{exactly} the same points''~\cite{pfister2002weighted}. This introduces an error which the authors name the \emph{correspondence error}. The correspondence error is the maximum distance between each point and it's closest match, which depends on the distance among the Model points, \cite{slamet2008boosting} give a clear illustration in their Figure 1. 
 
 \subsection{Feature Based Registration}
 
+
+
 \subsection{Almost none of the methods use color?}
 
+
+\section{Experiments}
+
+We ran a number of experiments to find out about the behavior of different registration methods and their performance in different settings. One of the most influential properties of the input data is the magnitude of the transformation between frames. To clarify; a slow-driving robot will record frames that are are mostly similar, making it easier to find corresponding points or features in both frames, whereas a handheld RGB-D camera might output frames with a much larger discrepancy. However, in some approaches, frames are intentionally discarded in order to avoid the buildup of error they cause [[SOURCE?]]. 
+
+\subsection{Dataset}
+
+As our dataset we chose an RGB-D dataset recorded by \cite{sturm11rss-rgbd}, in addition to the RGB-D feed, it contains a ground-truth for the camera's position, making it easier to evaluate our results.
 
 \section{Results}
 % Results of pure ICP (pretty poor)
@@ -55,7 +73,7 @@ Weighted scan matching removes a simplyfying assumption from ICP, namely that ``
 % Analysis of featurebased methods
 
 
-\bibliography{../literature/refs}{}
+\bibliography{../../literature/refs.bib}{}
 \bibliographystyle{apalike}
 
 \end{document}

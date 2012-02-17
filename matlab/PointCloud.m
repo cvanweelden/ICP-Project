@@ -84,8 +84,7 @@ classdef PointCloud < handle
         
         function apply_matrix(obj, T)
             % Apply a (homogeneous) transformation matrix
-            obj.xyz = T * [obj.xyz; ones(1, obj.n)];
-            obj.xyz = obj.xyz(1:3,:);
+            obj.xyz = T(1:3,:) * [obj.xyz; ones(1, obj.n)];
         end
         
         function obj = apply_qt(obj, qt)
