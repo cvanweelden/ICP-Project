@@ -113,51 +113,63 @@ PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype, float 
 	return frame;
 }
 
-Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame, PointCloud<PointXYZRGB>::Ptr model )
+Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame,
+							  PointCloud<PointXYZRGB>::Ptr model,
+							  Method initial_method,
+							  bool use_ICP)
 {
-	//Compute normals
-	PointCloud<Normal>::Ptr model_normals = getNormals( model );
-	PointCloud<Normal>::Ptr frame_normals = getNormals( frame );
+	Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
 	
-	//Compute FPFH features
-	PointCloud<FPFHSignature33>::Ptr model_features= getFeaturesFPFH( model, model_normals );
-	PointCloud<FPFHSignature33>::Ptr frame_features= getFeaturesFPFH( frame, frame_normals );
+	if (initial_method == FPFH) {
+		//Compute normals
+		PointCloud<Normal>::Ptr model_normals = getNormals( model );
+		PointCloud<Normal>::Ptr frame_normals = getNormals( frame );
+		
+		//Compute FPFH features
+		PointCloud<FPFHSignature33>::Ptr model_features= getFeaturesFPFH( model, model_normals );
+		PointCloud<FPFHSignature33>::Ptr frame_features= getFeaturesFPFH( frame, frame_normals );
+		
+		//Initialize allignment method
+		SampleConsensusInitialAlignment<PointXYZRGB, PointXYZRGB, FPFHSignature33> sac_ia;
+		sac_ia.setInputCloud( frame );
+		sac_ia.setSourceFeatures( frame_features );
+		sac_ia.setInputTarget( model );
+		sac_ia.setTargetFeatures( model_features );
+		
+		//Set parameters for allignment and RANSAC
+		sac_ia.setMaxCorrespondenceDistance( SAC_MAX_CORRESPONDENCE_DIST );
+		sac_ia.setMinSampleDistance( SAC_MIN_SAMPLE_DIST );
+		//sac_ia.setMaximumIterations( SAC_MAX_ITERATIONS );
+		
+		//Allign frame using FPFH features
+		sac_ia.align( *frame );
+		//std::cout << "Done! MSE: " << sac_ia.getFitnessScore() << endl;
+		
+		//Get the transformation
+		transformation = sac_ia.getFinalTransformation();
+	}
 	
-	//Allign the new frame using FPFH features and RANSAC
-	SampleConsensusInitialAlignment<PointXYZRGB, PointXYZRGB, FPFHSignature33> sac_ia;
-	sac_ia.setInputCloud( frame );
-	sac_ia.setSourceFeatures( frame_features );
-	sac_ia.setInputTarget( model );
-	sac_ia.setTargetFeatures( model_features );
-	sac_ia.setMaxCorrespondenceDistance( SAC_MAX_CORRESPONDENCE_DIST );
-	sac_ia.setMinSampleDistance( SAC_MIN_SAMPLE_DIST );
-	//sac_ia.setMaximumIterations( SAC_MAX_ITERATIONS );
-	sac_ia.align( *frame );
-	std::cout << "Done! MSE: " << sac_ia.getFitnessScore() << endl;
+	if (use_ICP) {
+		IterativeClosestPoint<PointXYZRGB, PointXYZRGB> icp;
+		icp.setInputCloud( frame );
+		icp.setInputTarget( model );
+		
+		//Set the ICP parameters
+		icp.setMaxCorrespondenceDistance(0.002);
+		icp.setMaximumIterations(50);
+		icp.setTransformationEpsilon(0.001);
+		icp.setEuclideanFitnessEpsilon(0.001);
+		
+		//Refine the allignment using ICP
+		icp.align( *frame );
+		
+		//Some debug printing
+		//std::cout << "has converged:" << icp.hasConverged() << " score: " <<
+		//icp.getFitnessScore() << std::endl;
+		
+		transformation = icp.getFinalTransformation() * transformation;
+	}
 	
-	//Get the transformation
-	Eigen::Matrix4f transformation = sac_ia.getFinalTransformation();
-	
-	//std::cout << "Refining allignment of " << files[i] << endl;
-	//Set the ICP parameters
-	//pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
-	//pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
-	//icp.setMaxCorrespondenceDistance(0.002);
-	//icp.setMaximumIterations(50);
-	//icp.setRANSACOutlierRejectionThreshold(0.01); //default: 0.05m
-	//icp.setRANSACIterations(50);
-	//icp.setTransformationEpsilon(0.001);
-	//icp.setEuclideanFitnessEpsilon(0.001);
-	
-	//Refine the allignment using ICP
-	//icp.setInputCloud(frame);
-	//icp.setInputTarget(model);
-	//icp.align(alligned_frame);
-	//pcl::transformPointCloud(*frame, *frame, current_transform);
-	
-	//Some debug printing
-	//std::cout << "has converged:" << icp.hasConverged() << " score: " <<
-	//icp.getFitnessScore() << std::endl;
 	std::cout << "Found transformation: " << endl << transformation << std::endl;
 	
 	return transformation;

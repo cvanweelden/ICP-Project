@@ -1,7 +1,7 @@
 \documentclass[a4paper]{article}
 \usepackage{listings}
 \usepackage{graphicx}
-\usepackage[scale=.7]{geometry}
+%\usepackage[scale=.7]{geometry}
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage{acronym}
@@ -9,7 +9,7 @@
 
 \usepackage[usenames, pdftex]{color}
 
-\acronym{ICP}{Iterated Closest Point}
+%\acronym{ICP}{Iterated Closest Point}
 
 \title{Title\\
 {\large Subtitle}}
@@ -25,11 +25,16 @@
 
 \section{Introduction}
 
-In this project we familiarized ourselves with different methods for 3D registration. The availability of cheap RGB+D sensors such as the Kinect could lead to new applications. A Kinect mounted on a moving robot could replace both it's RGB camera and it's range finder. However, in order to make sense of the Kinect's output, we need to perform a registration step. A new application could be affordable 3D reconstructions of the insides of buildings. However, for all of these, we need to \emph{register} the output of the RGB+D camera, i.e, we need to find the transformation that the camera made in between the captured frames. The robot's odometry can sometimes be used to get an initial estimate of the transformation, but in scenario where the RGB+D camera is hand-held not even this is possible. The combined RGB and depth data forms a ``point cloud'', a set of 3D coordinate points indicating where the sensor measured a solid object. Assuming that there is enough overlap between each pair of consecutive point clouds, we find a good registration by finding an optimal way to fit the two clouds.
+In this project we familiarized ourselves with different methods for 3D registration. The availability of cheap RGB+D sensors such as the Kinect could lead to new applications. A Kinect mounted on a moving robot could replace both it's RGB camera and it's range finder. However, in order to make sense of the Kinect's output, we need to perform a registration step. A new application could be affordable 3D reconstructions of the insides of buildings. However, for all of these, we need to \emph{register} the output of the RGB+D camera, i.e, we need to find the transformation that the camera made in between the captured frames. The robot's odometry can sometimes be used to get an initial estimate of the transformation, but in scenario where the RGB+D camera is hand-held not even this is possible.
+
+The combined RGB and depth data forms a ``point cloud'', a set of 3D coordinate points indicating where the sensor measured a solid object. Assuming that there is enough overlap between each pair of consecutive point clouds, we find a good registration by finding an optimal way to fit the two clouds.
 
 \section{Background}
 
 \subsection{ICP Based Registration}
+
+
+
 
 % Talk about articles that use pure ICP.
 Weighted scan matching removes a simplyfying assumption from ICP, namely that ``the range scans of different poses sample the environment's boundary at \emph{exactly} the same points''~\cite{pfister2002weighted}. This introduces an error which the authors name the \emph{correspondence error}. The correspondence error is the maximum distance between each point and it's closest match, which depends on the distance among the Model points, \cite{slamet2008boosting} give a clear illustration in their Figure 1. 
