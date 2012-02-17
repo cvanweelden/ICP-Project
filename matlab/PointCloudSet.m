@@ -24,7 +24,7 @@ classdef PointCloudSet < handle
                 [~,timestamp,~] = fileparts(obj.depth_files(i).name);
                 timestamp = str2double(timestamp);
                 [~,minidx] = min(abs(ps(:,1) - timestamp));
-                obj.poses(i,:) = ps(minidx,[5 6 7 8 2 3 4]);
+                obj.poses(i,:) = ps(minidx,[8 5 6 7 2 3 4]);
             end
             
         end
@@ -53,12 +53,11 @@ classdef PointCloudSet < handle
             dq = quatmultiply(quatinv(q1), q2);
             dt = t2 - quatrotate(dq, t1);
             
-            % assert(all(abs(q2 - quatmultiply(q1, dq)) < 1e-5));
-            % assert(all(abs(t2 - (quatrotate(dq, t1) + dt)) < 1e-9));
-            % assert(all(abs(rigid_multiply(qt, [q1 t1]) - [q2 t2]) < 1e-5));
             qt = [dq dt];
-            
 
+            assert(all(abs(q2 - quatmultiply(q1, dq)) < 1e-5));
+            assert(all(abs(t2 - (quatrotate(dq, t1) + dt)) < 1e-9));
+            assert(all(abs(rigid_multiply(qt, [q1 t1]) - [q2 t2]) < 1e-5));
         end
             
         
