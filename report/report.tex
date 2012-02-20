@@ -9,6 +9,8 @@
 \usepackage[usenames, pdftex]{color}
 
 \acrodef{ICP}[ICP]{Iterated Closest Point}
+\acrodef{RANSAC}[RANSAC]{RANdom SAmple Consensus}
+\acrodef{FPFH}[FPFH]{Fast Point Feature Histograms}
 
 \title{Title\\
 {\large Subtitle}}
@@ -38,7 +40,7 @@ The combined RGB and depth data forms a ``point cloud'', a set of 3D coordinate 
 
 \subsection{ICP Based Registration}
 
-The basic method used in almost every approach to 3D registration is \ac{ICP}\cite{besl1992method}, it is an expectation maximization method that iteratively minimizes the distance between each point and it's closest neighbor. Though \ac{ICP} is currently used mostly as a refinement step for more advanced algorithms, there are still some papers describing experiments where using \ac{ICP} as the main registration procedure has been successful [[WHICH]]. 
+A basic method used in almost every approach to 3D registration is \ac{ICP}\cite{besl1992method}, it is an expectation maximization method that iteratively minimizes the distance between each point and it's closest neighbor. Though \ac{ICP} is currently used mostly as a refinement step for more advanced algorithms, there are still some papers describing experiments where using \ac{ICP} as the main registration procedure has been successful [[WHICH]]. 
 
 In \cite{segal2009generalized}, an extension to \ac{ICP} was introduced that takes into account the local characteristics of the matched points. This Generalized-ICP gives a higher weight to point correspondence errors if they are in a direction perpendicular to the estimated plane. It is mentioned in both \cite{rusinkiewicz2001efficient} and \cite{segal2009generalized} that using this extension prevents the application of a closed-form solution to the minimization step.
 
@@ -46,6 +48,7 @@ Weighted scan matching removes a simplyfying assumption from ICP, namely that ``
 
 \subsection{Feature Based Registration}
 
+An alternative to \ac{ICP} based registration is feature based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space, usually combined with \ac{RANSAC}. \cite{rusu2009fast} describes such an approach using \ac{FPFH} as features with a variant of the \ac{ICP} algorithm as refinement step.
 
 
 \subsection{Almost none of the methods use color?}
@@ -68,7 +71,7 @@ As our dataset we chose an RGB-D dataset recorded by \cite{sturm11rss-rgbd}, in 
 
 
 \section{Analysis}
-% Why does pure ICP work in the other articles?
+% Why does pure ICP work in the other articles? How do we show this?
 
 % Why does ICP make SIFT results worse?
 

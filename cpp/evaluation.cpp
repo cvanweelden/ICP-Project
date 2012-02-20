@@ -4,8 +4,7 @@
 #include <sstream>
 #include <stdio.h>
 #include <vector>
-#include <dirent.h>
-#include <errno.h>
+#include <limits>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -16,39 +15,10 @@
 #include <Eigen/Geometry>
 
 #include "registration.h"
+#include "util.h"
 
 using namespace std;
 using namespace pcl;
-
-bool hasEnding (string const &fullString, string const &ending)
-{
-    if (fullString.length() >= ending.length()) {
-        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
-    } else {
-        return false;
-    }
-}
-
-int getFiles (string dir, vector<string> &files, string const &extension, vector<double> &timestamps)
-{
-    DIR *dp;
-    struct dirent *dirp;
-    if((dp  = opendir(dir.c_str())) == NULL) {
-        cout << "Error(" << errno << ") opening " << dir << endl;
-        return errno;
-    }
-	
-    while ((dirp = readdir(dp)) != NULL) {
-		string filename = dirp->d_name;
-        if (hasEnding(filename, extension)) {
-            files.push_back(dir+string(dirp->d_name));
-			filename.erase(filename.size()-extension.size());
-			timestamps.push_back(boost::lexical_cast<double>(filename));
-		}
-    }
-    closedir(dp);
-    return 0;
-}
 
 string pprint (Eigen::Vector3f t)
 {
@@ -124,10 +94,11 @@ void getGroundTruthPose(const double timestamp, const vector<double> &timestamp_
 
 int main (int argc, char** argv)
 {	
-	string usage = "usage: $evaluation <datadir> <groundtruth> <outputfile> [-t <filetype> (default: .ply)] [-d <max_frame_distance> (default: 1)] [-m <registration_method{NONE,FPFH}> (default: FPFH)] [--no_icp]";
+	string usage = "usage: $evaluation <datadir> <groundtruth> <outputfile> [-t <filetype> (default: .ply)] [-d <max_frame_distance> (default: 1)] [-f <limit_frames> (default: unlimited)] [-m <registration_method{NONE,FPFH}> (default: FPFH)] [--no_icp]";
 	
 	int num_args = argc;
 	int max_frame_distance = 1;
+	int max_frames = numeric_limits<int>::max();
 	string filetype = ".ply";
 	Method registration_method = FPFH;
 	bool use_icp = true;
@@ -135,6 +106,11 @@ int main (int argc, char** argv)
 	for (int i=4; i<argc; i++) {
 		if (strcmp(argv[i],"-d") == 0) {
 			max_frame_distance = boost::lexical_cast<int>(argv[i+1]);
+			num_args -= 2;
+			i++;
+		}
+		else if (strcmp(argv[i],"-f") == 0) {
+			max_frames = boost::lexical_cast<int>(argv[i+1]);
 			num_args -= 2;
 			i++;
 		}
@@ -205,7 +181,7 @@ int main (int argc, char** argv)
 	Eigen::Vector3f translation2;
 	
 	cout << "Starting registration evaluation" << endl;
-	for (size_t i=0; i<files.size(); i++) {
+	for (size_t i=0; i<files.size() && i<max_frames; i++) {
 		frame1 = loadFrame(files[i], filetype);
 		getGroundTruthPose(timestamps[i], timestamp_truth, orientation_truth, translation_truth,
 						   orientation1, translation1);
@@ -235,7 +211,7 @@ int main (int argc, char** argv)
 			+ pprint(translation2) + " " + pprint(orientation2) + " "
 			+ pprint(t) + " " + pprint(q);
 			
-			outfile << s << endl;
+			outfile << offset << " " << s << endl;
 		}
 	}
 	

@@ -30,34 +30,6 @@
 
 using namespace std;
 using namespace pcl;
-
-/*
-bool hasEnding (std::string const &fullString, std::string const &ending)
-{
-    if (fullString.length() >= ending.length()) {
-        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
-    } else {
-        return false;
-    }
-}
-
-int getfiles (string dir, vector<string> &files, string const &extension)
-{
-    DIR *dp;
-    struct dirent *dirp;
-    if((dp  = opendir(dir.c_str())) == NULL) {
-        cout << "Error(" << errno << ") opening " << dir << endl;
-        return errno;
-    }
-
-    while ((dirp = readdir(dp)) != NULL) {
-        if (hasEnding(dirp->d_name, extension))
-            files.push_back(string(dirp->d_name));
-    }
-    closedir(dp);
-    return 0;
-}
-*/
  
 PointCloud<FPFHSignature33>::Ptr getFeaturesFPFH( PointCloud<PointXYZRGB>::Ptr cloud, PointCloud<Normal>::Ptr normals )
 {	
