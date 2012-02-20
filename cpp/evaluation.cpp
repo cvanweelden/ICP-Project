@@ -212,7 +212,7 @@ int main (int argc, char** argv)
 		
 		for (int offset=1; offset<=max_frame_distance && i+offset<files.size(); offset++) {
 			frame2 = loadFrame(files[i+offset], filetype);
-			getGroundTruthPose(timestamps[i+1], timestamp_truth, orientation_truth,
+			getGroundTruthPose(timestamps[i+offset], timestamp_truth, orientation_truth,
 							   translation_truth, orientation2, translation2);
 			
 
