@@ -29,7 +29,7 @@
 
 \section{Introduction}
 
-In this project we familiarized ourselves with different methods for 3D registration. The availability of cheap RGB+D sensors such as the Kinect could lead to new applications. A Kinect mounted on a moving robot could replace both it's RGB camera and it's range finder. A new application could be affordable 3D reconstructions of the insides of buildings. But in order to make sense of the Kinect's output, we need to perform a registration step; we need to \emph{register} the output of the RGB+D camera, i.e, we need to find the transformation that the camera made in between the captured frames. The robot's odometry can sometimes be used to get an initial estimate of the transformation, but in a scenario where the RGB+D camera is hand-held not even this is possible. For this reason we focused on the registration step only. 
+In this project we familiarized ourselves with several methods for 3D registration. The availability of cheap RGB+D sensors such as the Kinect could lead to new applications. A Kinect mounted on a moving robot could replace both it's RGB camera and it's range finder. A new application could be affordable 3D reconstructions of the insides of buildings. But in order to make sense of the Kinect's output, we need to perform a registration step; we need to \emph{register} the output of the RGB+D camera, i.e, we need to find the transformation that the camera made in between the captured frames. The robot's odometry can sometimes be used to get an initial estimate of the transformation, but in a scenario where the RGB+D camera is hand-held not even this is possible. For this reason we focused on the registration step only. 
 
 The combined RGB and depth data forms a ``point cloud'', a set of 3D coordinate points indicating where the sensor measured a solid object. Assuming that there is enough overlap between each pair of consecutive point clouds, we find a good registration by finding an optimal way to fit the two clouds.
 
@@ -53,26 +53,38 @@ Weighted scan matching removes a simplyfying assumption from ICP, namely that ``
 
 \section{Experiments}
 
-We ran a number of experiments to find out about the behavior of different registration methods and their performance in different settings. One of the most influential properties of the input data is the magnitude of the transformation between frames. To clarify; a slow-driving robot will record frames that are are mostly similar, making it easier to find corresponding points or features in both frames, whereas a handheld RGB-D camera might output frames with a much larger discrepancy. However, in some approaches, frames are intentionally discarded in order to avoid the buildup of error they cause [[SOURCE?]]. 
+We ran a number of experiments to find out about the behavior of different registration methods and their performance in different settings. One of the most influential properties of the input data is the magnitude of the transformation between frames. To clarify; a slow-driving robot will record frames that are are mostly similar, making it easier to find corresponding points or features in both frames, whereas a shaky handheld RGB-D camera might output frames with a much larger discrepancy. Typically, a set of frames with small transformations between them is an easier input to a registration algorithm. However, when building a global model or using the registration to perform SLAM, each step contributes an amount of error to the final results, therefore it is better to use as few frames as possible as long as the registration still works reasonably well. [[Is er een artikel waar ze frames overslaan onder bepaalde condities?: dat even citeren.]]
+
+Our first experiment examines whether the total buildup of error is larger when using more frames, we did this by [[...]] We've also run the registration on the dataset to create a global model, to show that the buildup of error can be quite catastrophic for this purpose.
+
+The rest of our experiments focus on the advantages of using feature-based registration methods when the magnitude of the relative transform between frames gets larger. All of these experiments consist of registering each frame $i$ to the $i-n^{\mathrm{th}}$ frame, with $n = 1,2,3,...$. By skipping frames in this manner, we artificially create a larger transformation for the registration step to solve. We expect to see that the feature-based methods are better at dealing with this larger transformation.
 
 \subsection{Dataset}
 
-As our dataset we chose an RGB-D dataset recorded by \cite{sturm11rss-rgbd}, in addition to the RGB-D feed, it contains a ground-truth for the camera's position, making it easier to evaluate our results.
+As our dataset we chose an RGB-D dataset recorded by \cite{sturm11rss-rgbd}, in addition to the RGB-D feed, it contains a ground-truth for the camera's position, making it easier to evaluate our results. Moreover, this dataset was recorded with a relatively steady movement of the RGB-D sensor, so that the magnitude of the translation is constant.
 
 \section{Results}
-% Results of pure ICP (pretty poor)
 
-% Results of our naive SIFT (+ICP) based registration
+[[Grafiek die laat zien dat de error van A->B + B->C groter is dan van A->C, dat het dus zin heeft om frames te skippen]]
 
-% Results of PCL's built in feature based methods
+[[Grafiek die laat zien \emph{hoe groot} de transformaties zijn die ICP inschat, vergeleken bij de ground truth: misschien toont dat aan dat ICP altijd liever kleine transformaties kiest]]
+[[In dezelfde grafiek: met een feature based methode]]
+
+[[Grafiek met de gemiddelde relative error van ICP en van Feature-Based voor verschillende frameskips]]
+[[Idem, voor andere dataset]]
+
+[[Grafiek die laat zien dat ICP minder iteraties nodig heeft als er een Feature-Based stap aan vooraf gaat]]
 
 
-\section{Analysis}
+
+\section{Discussion}
 % Why does pure ICP work in the other articles?
 
 % Why does ICP make SIFT results worse?
 
 % Analysis of featurebased methods
+
+% Why u no use color?
 
 
 \bibliography{../../literature/refs.bib}{}
