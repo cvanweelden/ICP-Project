@@ -3,13 +3,15 @@ function results_object = parse_eval_file(eval_file)
 % Read the output file
 results = importdata(eval_file, ' ');
 
-offset = results(:, 1);
-model_t = results(:, 2:4);
-model_q = results(:, [8 5:7]);
-frame_t = results(:, 9:11);
-frame_q = results(:, [15 12:14]);
-transformation_t = results(:, 16:18);
-transformation_q = results(:, [22 19:21]);
+model_index = results(:, 1);
+frame_index = results(:, 2);
+offset = frame_index - model_index;
+model_t = results(:, 3:5);
+model_q = results(:, [9 6:8]);
+frame_t = results(:, 10:12);
+frame_q = results(:, [16 13:15]);
+transformation_t = results(:, 17:19);
+transformation_q = results(:, [23 20:22]);
 
 % Change from mocap to kinect coordinate system
 model_t(:,2) = -model_t(:,2);
@@ -35,6 +37,8 @@ error_q = angular_distance(transformation_q, true_transformation_q);
 error_t = sqrt(sum((true_transformation_t - transformation_t).^2,2));
 
 % Put everything in the return object
+results_object.model_index = model_index;
+results_object.frame_index = frame_index;
 results_object.offset = offset;
 results_object.model_t = model_t;
 results_object.model_q = model_q;

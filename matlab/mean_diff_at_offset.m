@@ -1,5 +1,5 @@
 function [mean_diff_t mean_diff_q] = mean_diff_at_offset(eval_file)
-%MEAN_ERROR_AT_OFFSET Compute the mean estimated difference (angular 
+%MEAN_DIFF_AT_OFFSET Compute the mean estimated difference (angular 
 %distance (rad) and euclidean distance) estimated at each offset for a file
 %generated using the evaluation script (see evaluation.cpp).
 

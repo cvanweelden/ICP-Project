@@ -211,7 +211,7 @@ int main (int argc, char** argv)
 			+ pprint(translation2) + " " + pprint(orientation2) + " "
 			+ pprint(t) + " " + pprint(q);
 			
-			outfile << offset << " " << s << endl;
+			outfile << i << " " << i+offset << " " << s << endl;
 		}
 	}
 	
