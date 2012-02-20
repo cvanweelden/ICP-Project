@@ -1,5 +1,5 @@
 function [mean_error_q mean_error_t] = mean_error_at_offset(eval_file)
-%MEAN_ERROR_AT_OFFSET Compute the mean error (angular distance and
+%MEAN_ERROR_AT_OFFSET Compute the mean error (angular distance (rad) and
 %euclidean distance) at each offset for a file generated using the
 %evaluation script (see evaluation.cpp).
 
