@@ -2,7 +2,7 @@
 clear
 config
 
-frameskip  = 4;
+frameskip  = 5;
 max_frames = 100;
 cloudsize  = 10000;
 
