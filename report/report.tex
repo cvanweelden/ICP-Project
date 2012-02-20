@@ -8,6 +8,7 @@
 \usepackage{cite}
 \usepackage[usenames, pdftex]{color}
 
+\acrodef{WSM}[WSM]{Weighted Scan Matching}
 \acrodef{ICP}[ICP]{Iterated Closest Point}
 \acrodef{RANSAC}[RANSAC]{Random Sample Consensus}
 \acrodef{FPFH}[FPFH]{Fast Point Feature Histograms}
@@ -15,7 +16,7 @@
 \title{Title\\
 {\large Subtitle}}
 
-\author{...\\
+\author{Carsten van Weelden \& Thomas van den Berg\\
   University of Amsterdam\\
   The Netherlands}
 
@@ -33,8 +34,7 @@
 
 In this project we familiarized ourselves with several methods for 3D registration. The availability of cheap RGB+D sensors such as the Kinect could lead to new applications. A Kinect mounted on a moving robot could replace both it's RGB camera and it's range finder. A new application could be affordable 3D reconstructions of the insides of buildings. But in order to make sense of the Kinect's output, we need to perform a registration step; we need to \emph{register} the output of the RGB+D camera, i.e, we need to find the transformation that the camera made in between the captured frames. The robot's odometry can sometimes be used to get an initial estimate of the transformation, but in a scenario where the RGB+D camera is hand-held not even this is possible. For this reason we focused on the registration step only. 
 
-The combined RGB and depth data forms a ``point cloud'', a set of 3D coordinate points indicating where the sensor measured a solid object. Assuming that there is enough overlap between each pair of consecutive point clouds, we find a good registration by finding an optimal way to fit the two clouds.
-
+The combined RGB and depth data forms a ``point cloud'': a set of 3D coordinate points indicating where the sensor measured a solid object. Assuming that there is enough overlap between each pair of consecutive point clouds, we find a good registration by finding an optimal way to fit the two clouds. We've experimented with different registration methods, and we'll report on their performance and whether it degrades under certain circumstances.
 
 \section{Background}
 
@@ -44,11 +44,14 @@ A basic method used in almost every approach to 3D registration is \ac{ICP}\cite
 
 In \cite{segal2009generalized}, an extension to \ac{ICP} was introduced that takes into account the local characteristics of the matched points. This Generalized-ICP gives a higher weight to point correspondence errors if they are in a direction perpendicular to the estimated plane. It is mentioned in both \cite{rusinkiewicz2001efficient} and \cite{segal2009generalized} that using this extension prevents the application of a closed-form solution to the minimization step.
 
-Weighted scan matching removes a simplyfying assumption from ICP, namely that ``the range scans of different poses sample the environment's boundary at \emph{exactly} the same points''~\cite{pfister2002weighted}. This introduces an error which the authors name the \emph{correspondence error}. The correspondence error is the maximum distance between each point and it's closest match, which depends on the distance among the Model points, \cite{slamet2008boosting} give a clear illustration in their Figure 1. 
+\ac{WSM} removes a simplyfying assumption from \ac{ICP}, namely that ``the range scans of different poses sample the environment's boundary at \emph{exactly} the same points''~\cite{pfister2002weighted}. In range scans, it often occurs that the points are much further apart in some areas of the model, because of the angle of the local surface or the distance from the sensor. The point-to-point error in these areas could easily be much greater, this is what the authors take into account by introducing an error which they name the \emph{correspondence error}. They model the variance of this error based on the distances to the closest model points, \cite{slamet2008boosting} give a clear illustration in their Figure 1. 
+
+In a sense, Generalized-ICP and \ac{WSM} are similar in that they make an explicit model of the error that the minimization step aims to minimize, based on the local characteristics. This has some clear advantages in terms of accuracy, but the extra computational costs are significant.
 
 \subsection{Feature Based Registration}
 
-An alternative to \ac{ICP} based registration is feature-based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space, usually combined with \ac{RANSAC}. In stead of matching each point in the cloud to it's closest neighbour, characteristic points are extracted, and a feature \emph{descriptor} is calculated for each. Based on these descriptors, the feature points are matched to their counterparts in the other frame to get a number of \emph{correspondences}. Not all these correspondences may be correct though, so \ac{RANSAC} is often used to filter the outliers. \cite{rusu2009fast} describes such an approach using \ac{FPFH} with a variant of the \ac{ICP} algorithm as a refinement step. 
+An alternative to \ac{ICP} based registration is feature-based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space, usually combined with \ac{RANSAC}. In stead of matching each point in the cloud to it's closest neighbour, characteristic points are extracted, and a feature \emph{descriptor} is calculated for each. Based on these descriptors, the feature points are matched to their counterparts in the other frame to get a number of \emph{correspondences}. Not all these correspondences may be correct though, so \ac{RANSAC} is often used to filter the outliers. \cite{rusu2009fast} describes such an approach using \ac{FPFH} with a variant of the \ac{ICP} algorithm as a refinement step.
+
 
 \section{Experiments}
 
@@ -64,6 +67,8 @@ As our dataset we chose an RGB-D dataset recorded by \cite{sturm11rss-rgbd}, in 
 
 \section{Results}
 
+[[Laten zien dat de error buildup ervoor zorgt dat een globaal model een zootje wordt, op onze eigen dataset]]
+
 [[Grafiek die laat zien dat de error van A->B + B->C groter is dan van A->C, dat het dus zin heeft om frames te skippen]]
 
 [[Grafiek die laat zien \emph{hoe groot} de transformaties zijn die ICP inschat, vergeleken bij de ground truth: misschien toont dat aan dat ICP altijd liever kleine transformaties kiest]]
@@ -77,8 +82,6 @@ As our dataset we chose an RGB-D dataset recorded by \cite{sturm11rss-rgbd}, in 
 \section{Discussion}
 
 % Why does pure ICP work in the other articles? How do we show this?
-
-% Why does ICP make SIFT results worse?
 
 % Analysis of featurebased methods
 
