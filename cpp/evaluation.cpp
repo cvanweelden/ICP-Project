@@ -148,13 +148,12 @@ int main (int argc, char** argv)
 		cout << "no initial guess";
 	}
 	if (registration_method == FPFH) {
-		cout << "FPFH features for initial guess";
+		cout << "FPFH features";
 	}
-	cout << " and ";
-	if (!use_icp) {
-		cout << "no ";
+	if (use_icp) {
+		cout << " and ICP";
 	}
-	cout << "refinement based on ICP." << endl;
+	cout << " for transformation estimation." << endl;
 	
 	//Read the ground truth
 	cout << "Reading ground truth" << endl;
