@@ -10,12 +10,12 @@ max_offset = max(results.offset);
 mean_diff_q = zeros(1,max_offset);
 mean_diff_t = zeros(1,max_offset);
 for i = 1:max_offset
-    transformation_q_at_i = results.transformation_q(results.offset == i);
+    transformation_q_at_i = results.transformation_q(results.offset == i,:);
     diff_q_at_i = 2 * acos(transformation_q_at_i(:,1)); %angular distance with [1 0 0 0], see angular distance function
     diff_q_at_i = min(diff_q_at_i, 2*pi-diff_q_at_i);
     mean_diff_q(i) = mean(diff_q_at_i);
     
-    transformation_t_at_i = results.transformation_t(results.offset == i);
+    transformation_t_at_i = results.transformation_t(results.offset == i,:);
     diff_t_at_i = sqrt(sum(transformation_t_at_i.^2,2));
     mean_diff_t(i) = mean(diff_t_at_i);
 end
