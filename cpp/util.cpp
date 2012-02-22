@@ -22,6 +22,25 @@ bool hasEnding (string const &fullString, string const &ending)
     }
 }
 
+int getFiles (string dir, vector<string> &files, string const &extension)
+{
+    DIR *dp;
+    struct dirent *dirp;
+    if((dp  = opendir(dir.c_str())) == NULL) {
+        cout << "Error(" << errno << ") opening " << dir << endl;
+        return errno;
+    }
+	
+    while ((dirp = readdir(dp)) != NULL) {
+		string filename = dirp->d_name;
+        if (hasEnding(filename, extension)) {
+            files.push_back(dir+string(dirp->d_name));
+		}
+    }
+    closedir(dp);
+    return 0;
+}
+
 int getFiles (string dir, vector<string> &files, string const &extension, vector<double> &timestamps)
 {
     DIR *dp;
@@ -36,6 +55,7 @@ int getFiles (string dir, vector<string> &files, string const &extension, vector
         if (hasEnding(filename, extension)) {
             files.push_back(dir+string(dirp->d_name));
 			filename.erase(filename.size()-extension.size());
+			cout << "BLAAA";
 			timestamps.push_back(boost::lexical_cast<double>(filename));
 		}
     }

@@ -14,6 +14,8 @@
 
 #include <pcl/filters/voxel_grid.h>
 
+#include <pcl/common/transforms.h>
+
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -58,7 +60,7 @@ int main (int argc, char** argv)
 	ModelMode model_mode = PREVIOUS;
 	bool use_icp = true;
 	
-	for (int i=4; i<argc; i++) {
+	for (int i=3; i<argc; i++) {
 		if (strcmp(argv[i],"-s") == 0) {
 			offset = 1 + boost::lexical_cast<int>(argv[i+1]);
 			num_args -= 2;
@@ -134,8 +136,7 @@ int main (int argc, char** argv)
 	cout << "Reading file list" << endl;
     string dir = argv[1];
     vector<string> files = vector<string>();
-	vector<double> timestamps = vector<double>();
-    getFiles(dir, files, filetype, timestamps);
+    getFiles(dir, files, filetype);
 	
 	//Create output directory
 	if (!(boost::filesystem::exists(argv[2]))) {
@@ -148,23 +149,24 @@ int main (int argc, char** argv)
 	
 	//Initialize the model
 	PointCloud<PointXYZRGB>::Ptr model = loadFrame(files[0], filetype);
-	saveToPLY(model, outdir + files[0].substr(0,files[0].size()-4));
+	saveToPLY(model, outdir + files[0].substr(files[0].find_last_of("/\\")+1,files[0].size()-4));
 	
 	//Initialize transformation from points in frame to points in model
 	Eigen::Matrix4f current_transformation = Eigen::Matrix4f::Identity();
 	
-	for (size_t i=1; i<files.size() && i<=max_frames; i+=offset) {
+	for (size_t i=offset; i<files.size() && i<=max_frames; i+=offset) {
+		cout << "Registering frame " << i << endl;
 		//load frame
 		PointCloud<PointXYZRGB>::Ptr frame = loadFrame(files[i], filetype);
 		//transform according to current transformation
-		transformPointCloud(*frame, *frame, current_transformation);
+		pcl::transformPointCloud(*frame, *frame, current_transformation);
 		
 		//Do the registration and update the transformation
 		Eigen::Matrix4f transformation = registerFrame(frame, model, registration_method, use_icp);
 		current_transformation = transformation * current_transformation;
 		
 		//Write the registered frame:
-		saveToPLY(frame, outdir + files[i].substr(0,files[i].size()-4));
+		saveToPLY(frame, outdir + files[i].substr(files[i].find_last_of("/\\")+1,files[i].size()-4));
 		
 		//Get the model for the next registration step
 		if (model_mode == PREVIOUS) {
