@@ -111,7 +111,7 @@ Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame,
 		//Set parameters for allignment and RANSAC
 		sac_ia.setMaxCorrespondenceDistance( SAC_MAX_CORRESPONDENCE_DIST );
 		sac_ia.setMinSampleDistance( SAC_MIN_SAMPLE_DIST );
-		//sac_ia.setMaximumIterations( SAC_MAX_ITERATIONS );
+		sac_ia.setMaximumIterations( SAC_MAX_ITERATIONS );
 		
 		//Allign frame using FPFH features
 		sac_ia.align( *frame );
@@ -127,10 +127,10 @@ Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame,
 		icp.setInputTarget( model );
 		
 		//Set the ICP parameters
-		icp.setMaxCorrespondenceDistance(0.002);
-		icp.setMaximumIterations(50);
-		icp.setTransformationEpsilon(0.001);
-		icp.setEuclideanFitnessEpsilon(0.001);
+		icp.setMaxCorrespondenceDistance(ICP_MAX_CORRESPONDENCE_DISTANCE);
+		icp.setMaximumIterations(ICP_MAX_ITERATIONS);
+		icp.setTransformationEpsilon(ICP_TRANSFORMATION_EPSILON);
+		icp.setEuclideanFitnessEpsilon(ICP_EUCLIDEAN_FITNESS_EPSILON);
 		
 		//Refine the allignment using ICP
 		icp.align( *frame );
