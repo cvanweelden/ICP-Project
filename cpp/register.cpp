@@ -1,8 +1,19 @@
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <stdio.h>
+#include <vector>
+#include <limits>
+
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/ply_io.h>
+
+#include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "registration.h"
 #include "util.h"
@@ -29,17 +40,23 @@ void saveToPLY( PointCloud<PointXYZRGB>::Ptr cloud, string filepath )
 
 int main (int argc, char** argv)
 {	
-	string usage = "usage: $register <datadir> <outputdir> [-t <filetype> (default: .ply)] [-d <frame_skip> (default: 1)] [-m <registration_method{NONE,FPFH}> (default: FPFH)] [--no_icp]";
+	string usage = "usage: $register <datadir> <outputdir> [-t <filetype> (default: .ply)] [-d <frame_distance> (default: 1)] [-f <limit_frames> (default: unlimited)] [-m <registration_method{NONE,FPFH}> (default: FPFH)] [--no_icp]";
 	
 	int num_args = argc;
-	int frameskip = 1;
+	int frame_distance = 1;
+	int max_frames = numeric_limits<int>::max();
 	string filetype = ".ply";
 	Method registration_method = FPFH;
 	bool use_icp = true;
 	
 	for (int i=4; i<argc; i++) {
 		if (strcmp(argv[i],"-d") == 0) {
-			frameskip = boost::lexical_cast<int>(argv[i+1]);
+			frame_distance = boost::lexical_cast<int>(argv[i+1]);
+			num_args -= 2;
+			i++;
+		}
+		else if (strcmp(argv[i],"-f") == 0) {
+			max_frames = boost::lexical_cast<int>(argv[i+1]);
 			num_args -= 2;
 			i++;
 		}
@@ -65,25 +82,24 @@ int main (int argc, char** argv)
 		}
 	}
 	
-	if (num_args < 4) {
+	if (num_args < 3) {
 		cout << usage << endl;
 		return -1;
 	}
 	
 	//Summary message at start
-	cout << "Registration of one frame in " << frameskip
+	cout << "Registration with frameskip " << frame_distance-1
 	<< ", using ";
 	if (registration_method == NONE) {
 		cout << "no initial guess";
 	}
 	if (registration_method == FPFH) {
-		cout << "FPFH features for initial guess";
+		cout << "FPFH features";
 	}
-	cout << " and ";
-	if (!use_icp) {
-		cout << "no ";
+	if (use_icp) {
+		cout << " and ICP";
 	}
-	cout << "refinement based on ICP." << endl;
+	cout << " for transformation estimation." << endl;
 	
 	//Read file list
 	cout << "Reading file list" << endl;
@@ -92,7 +108,19 @@ int main (int argc, char** argv)
 	vector<double> timestamps = vector<double>();
     getFiles(dir, files, filetype, timestamps);
 	
+	//Create output directory
+	if (!(boost::filesystem::exists(argv[2]))) {
+		if(!boost::filesystem::create_directory(argv[2])) {
+			cout << "Error! Could not create output directory." << endl;
+			return -1;
+		}
+	}
+	string outdir = argv[2];
+	
+	//Initialize the model
 	PointCloud<PointXYZRGB>::Ptr model = loadFrame(files[0], filetype);;
+	saveToPLY(model, outdir + files[0].substr(0,files[0].size()-4));
+	
 	PointCloud<PointXYZRGB>::Ptr frame;
 	
 	
