@@ -73,7 +73,9 @@ In \cite{izadi2011kinectfusion,newcombe2011kinectfusion} \ac{ICP} is used to reg
 
 Registration can also be applied to the \ac{SLAM} problem, since the transformation between camera poses is the inverse of the transformation between the captured point clouds. This is also know as \emph{visual odometry} and a more complete overview can be found in \cite{scaramuzzavisual,fraundorfervisual}. Like global registration, it suffers from the accumulated error from pairwise registration and is generally combined with global optimization techniques such as loop closing to generate an accurate camera trajectory. 
 
+%In \cite{pfingsthorn2008scalable} \ac{WSM} is combined with loop closing and a manifold data structure?
 
+In \cite{slamet2008boosting} \ac{ICP} and \ac{WSM} are applied to solve the \ac{SLAM} problem, but instead of registering each frame to the previous frame they store all registered frames in a quad tree and register the frames against multiple previously registered frames. They show that this leads to better results than incremental pair-wise registration of frames.
 
 \section{Experiments}
 
