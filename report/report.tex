@@ -15,6 +15,8 @@
 \acrodef{PFH}[PFH]{Point Feature Histograms}
 \acrodef{FPFH}[FPFH]{Fast Point Feature Histograms}
 \acrodef{SLAM}[SLAM]{Simultaneous Localization and Mapping}
+\acrodef{PCL}[PCL]{Point Cloud Library}
+\acrodef{SAC-IA}[SAC-IA]{SAmple Consensus Initial Alignment}
 
 \title{Registration using RGB-D camera\\
 {\large Project A.I. / Individual project}}
@@ -95,7 +97,9 @@ The specific datasets that we use are \texttt{freiburg2\_xyz} and \texttt{freibu
 
 \subsection{Implementation}
 
-%FPFH method from \cite{rusu2009fast} as implemented in PCL \cite{Rusu_ICRA2011_PCL}
+For our implementation we use \ac{PCL} \cite{Rusu_ICRA2011_PCL}. We use the standard \ac{ICP} implementation provided by this library with a maximum of 25 iterations and maximum correspondence distance of 0.25m. For our feature based method we use the implementation of the \ac{SAC-IA} method from \cite{rusu2009fast} as implemented for this library\footnote{This implementation does not apply the Levenberg-Marquardt algorithm as described in the paper. In stead, we apply the \ac{ICP} algorithm as final refinement.}, limited to 1000 iterations with a maximum correspondence distance of 0.1m and minimum distance of 0.5m between the samples used for the \ac{RANSAC} method. For the \ac{FPFH} features we use a radius of 0.1m for normal estimation and 0.5m for feature computation. In all cases we remove sparse outliers by removing all points whose mean distance to its 50 nearest neighbors is more than one standard deviation from the overall mean and we subsample by taking one point for each 5cm$^3$ voxel.
+
+
 
 
 
