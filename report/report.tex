@@ -12,6 +12,7 @@
 \acrodef{WSM}[WSM]{Weighted Scan Matching}
 \acrodef{ICP}[ICP]{Iterated Closest Point}
 \acrodef{RANSAC}[RANSAC]{Random Sample Consensus}
+\acrodef{PFH}[PFH]{Point Feature Histograms}
 \acrodef{FPFH}[FPFH]{Fast Point Feature Histograms}
 \acrodef{SLAM}[SLAM]{Simultaneous Localization and Mapping}
 
@@ -54,7 +55,10 @@ In a sense, Generalized-ICP and \ac{WSM} are similar in that they make an explic
 
 \subsubsection{Feature Based Registration}
 
-An alternative to \ac{ICP} based registration is feature-based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space, usually combined with \ac{RANSAC}. In stead of matching each point in the cloud to it's closest neighbour, characteristic points are extracted, and a feature \emph{descriptor} is calculated for each. Based on these descriptors, the feature points are matched to their counterparts in the other frame to get a number of \emph{correspondences}. Not all these correspondences may be correct though, so \ac{RANSAC} is often used to filter the outliers. \cite{rusu2009fast} describes such an approach using \ac{FPFH} with a variant of the \ac{ICP} algorithm as a refinement step.
+An alternative to \ac{ICP} based registration is feature-based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space, usually combined with \ac{RANSAC}. In stead of matching each point in the cloud to it's closest neighbour, characteristic points are extracted, and a feature \emph{descriptor} is calculated for each. Based on these descriptors, the feature points are matched to their counterparts in the other frame to get a number of \emph{correspondences}. Not all these correspondences may be correct though, so \ac{RANSAC} is often used to filter the outliers. 
+
+\cite{rusu2009fast} describes such an approach. In it, \ac{PFH} are used as feature descriptors. For each point, these features are based on the properties of points in its neighborhood. To speed up the matching and make it more robust, only \emph{unique} feature points are selected, i.e. points whose descriptors are different from the mean descriptor. \ac{RANSAC} is then used to find the best feature point correspondences.  
+
 
 \subsection{Applications}
 
