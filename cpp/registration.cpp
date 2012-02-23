@@ -85,6 +85,8 @@ PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype, float 
 	return frame;
 }
 
+/* Registers the frame (and also transforms it, I think).
+ */
 Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame,
 							  PointCloud<PointXYZRGB>::Ptr model,
 							  Method initial_method,
@@ -147,111 +149,3 @@ Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame,
 	return transformation;
 	
 }
-
-/*
-int main (int argc, char** argv)
-{
-	//Read file list
-    string dir = argv[1];
-    vector<string> files = vector<string>();
-    getfiles(dir, files, ".ply");
-    std::cout << "Reading " << files[0] << endl;
-
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr model (new pcl::PointCloud<pcl::PointXYZRGB>);
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr frame (new pcl::PointCloud<pcl::PointXYZRGB>);
-	pcl::PointCloud<pcl::PointXYZRGB> alligned_frame;
-	Eigen::Matrix4f current_transform = Eigen::Matrix4f::Identity();
-	
-	pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> outlier_filter;
-	outlier_filter.setMeanK (50);
-	outlier_filter.setStddevMulThresh (1.0);
-	
-	// Create the filtering object
-	pcl::VoxelGrid<pcl::PointXYZRGB> downsample_filter;
-	downsample_filter.setLeafSize (VOXEL_GRID_SIZE, VOXEL_GRID_SIZE, VOXEL_GRID_SIZE);
-	
-	//Initialize the model
-	if (pcl::io::loadPLYFile<pcl::PointXYZRGB>(dir + "/" + files[0], *model) == -1)
-	{
-	     PCL_ERROR ("Couldn't read first frame \n");
-	     return (-1);
-	}
-	outlier_filter.setInputCloud (model);
-	outlier_filter.filter (*model);
-	downsample_filter.setInputCloud (model);
-	downsample_filter.filter (*model);
-	
-	//Write the model
-	uint8_t tmp;
-	for (size_t j=0; j < model->points.size(); j++) {
-		pcl::PointXYZRGB *p = &model->points[j];
-		// unpack rgb into r/g/b
-		uint32_t rgb = *reinterpret_cast<int*>(&p->rgb);
-		uint8_t b = (rgb >> 16) & 0x0000ff;
-		uint8_t g = (rgb >> 8)  & 0x0000ff;
-		uint8_t r = (rgb)       & 0x0000ff;
-		// pack r/g/b into rgb
-		rgb = ((uint32_t)r << 16 | (uint32_t)g << 8 | (uint32_t)b);
-		p->rgb = *reinterpret_cast<float*>(&rgb);
-	}
-	pcl::io::savePLYFileBinary<pcl::PointXYZRGB>(files[0].substr(0,files[0].size()-4) + "_alligned.ply", *model);
-	
-	//Registration loop
-	for (size_t i=1; i<files.size(); i++) {
-		
-		std::cout << "Current transformation: " << endl << current_transform << std::endl;
-		
-		//Get quaternion plus translation vector pose notation from current_transform
-		Eigen::Matrix3f rotation = current_transform.block(0,0,2,2);
-		Eigen::Quaternionf q(rotation);
-		Eigen::Vector3f t = current_transform.block(0,3,2,3);
-		
-		std::cout << "As quaternion: [" << q.w() << " " << q.x() << " " << q.y() << " " << q.z() << "]" << endl;
-		std::cout << "with translation vector: " << endl << t << endl;
-		
-		std::cout << "Reading " << files[i] << endl;
-		//Load and filter the incoming frames
-		if (pcl::io::loadPLYFile<pcl::PointXYZRGB>(dir + "/" + files[i], *frame) == -1)
-		{
-			PCL_ERROR ("Couldn't read some frame \n");
-			return (-1);
-		}
-		outlier_filter.setInputCloud (frame);
-		outlier_filter.filter (*frame);
-		downsample_filter.setInputCloud (frame);
-		downsample_filter.filter (*frame);
-		
-		//Transform the new frame to the current estimate
-		pcl::transformPointCloud(*frame, *frame, current_transform);
-		
-		std::cout << "Alligning " << files[i] << endl;
-		Eigen::Matrix4f transformation = registerFrame(frame, model);
-		alligned_frame = *frame; //FIXME: remove alligned_frame completely
-		
-		current_transform = current_transform * transformation;
-		
-		//Write the alligned frame
-		uint8_t tmp;
-		for (size_t j=0; j < alligned_frame.points.size(); j++) {
-			pcl::PointXYZRGB *p = &alligned_frame.points[j];
-			// unpack rgb into r/g/b
-			uint32_t rgb = *reinterpret_cast<int*>(&p->rgb);
-			uint8_t b = (rgb >> 16) & 0x0000ff;
-			uint8_t g = (rgb >> 8)  & 0x0000ff;
-			uint8_t r = (rgb)       & 0x0000ff;
-			// pack r/g/b into rgb
-			rgb = ((uint32_t)r << 16 | (uint32_t)g << 8 | (uint32_t)b);
-			p->rgb = *reinterpret_cast<float*>(&rgb);
-		}
-		pcl::io::savePLYFileBinary<pcl::PointXYZRGB>(files[i].substr(0,files[i].size()-4) + "_alligned.ply", alligned_frame);
-		
-		
-		*model = *model + alligned_frame;
-		downsample_filter.setInputCloud (model);
-		downsample_filter.filter (*model);
-	}
-	    
-    
-
-  return (0);
-} */

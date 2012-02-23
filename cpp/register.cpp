@@ -12,6 +12,10 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/ply_io.h>
 
+#include <pcl/filters/voxel_grid.h>
+
+#include <pcl/common/transforms.h>
+
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -20,6 +24,12 @@
 
 using namespace std;
 using namespace pcl;
+
+enum ModelMode {
+	PREVIOUS,
+	RESAMPLE,
+	ADD
+};
 
 void saveToPLY( PointCloud<PointXYZRGB>::Ptr cloud, string filepath )
 {
@@ -40,18 +50,19 @@ void saveToPLY( PointCloud<PointXYZRGB>::Ptr cloud, string filepath )
 
 int main (int argc, char** argv)
 {	
-	string usage = "usage: $register <datadir> <outputdir> [-t <filetype> (default: .ply)] [-d <frame_distance> (default: 1)] [-f <limit_frames> (default: unlimited)] [-m <registration_method{NONE,FPFH}> (default: FPFH)] [--no_icp]";
+	string usage = "usage: $register <datadir> <outputdir> [-t <filetype> (default: .ply)] [-s <frameskip> (default: 0)] [-f <limit_frames> (default: unlimited)] [-r <registration_method{NONE,FPFH}> (default: FPFH)] [-m <model_mode{PREVIOUS,RESAMPLE,ADD}> (default: PREVIOUS)] [--no_icp]";
 	
 	int num_args = argc;
-	int frame_distance = 1;
+	int offset = 1;
 	int max_frames = numeric_limits<int>::max();
 	string filetype = ".ply";
 	Method registration_method = FPFH;
+	ModelMode model_mode = PREVIOUS;
 	bool use_icp = true;
 	
-	for (int i=4; i<argc; i++) {
-		if (strcmp(argv[i],"-d") == 0) {
-			frame_distance = boost::lexical_cast<int>(argv[i+1]);
+	for (int i=3; i<argc; i++) {
+		if (strcmp(argv[i],"-s") == 0) {
+			offset = 1 + boost::lexical_cast<int>(argv[i+1]);
 			num_args -= 2;
 			i++;
 		}
@@ -65,9 +76,19 @@ int main (int argc, char** argv)
 			num_args -= 2;
 			i++;
 		}
-		else if (strcmp(argv[i],"-m") == 0) {
+		else if (strcmp(argv[i],"-r") == 0) {
 			if (strcmp(argv[i+1],"NONE") == 0) {
 				registration_method = NONE;
+			}
+			num_args -= 2;
+			i++;
+		}
+		else if (strcmp(argv[i],"-m") == 0) {
+			if (strcmp(argv[i+1],"RESAMPLE") == 0) {
+				model_mode = RESAMPLE;
+			}
+			else if (strcmp(argv[i+1],"ADD") == 0) {
+				model_mode = ADD;
 			}
 			num_args -= 2;
 			i++;
@@ -88,8 +109,18 @@ int main (int argc, char** argv)
 	}
 	
 	//Summary message at start
-	cout << "Registration with frameskip " << frame_distance-1
+	cout << "Registration with frameskip " << offset-1
 	<< ", using ";
+	if (model_mode == PREVIOUS) {
+		cout << "previous frame ";
+	}
+	if (model_mode == RESAMPLE) {
+		cout << "resampled concatenated frames ";
+	}
+	if (model_mode == ADD) {
+		cout << "concatenated frames ";
+	}
+	cout << "as registration model and ";
 	if (registration_method == NONE) {
 		cout << "no initial guess";
 	}
@@ -97,7 +128,7 @@ int main (int argc, char** argv)
 		cout << "FPFH features";
 	}
 	if (use_icp) {
-		cout << " and ICP";
+		cout << " with ICP";
 	}
 	cout << " for transformation estimation." << endl;
 	
@@ -105,8 +136,7 @@ int main (int argc, char** argv)
 	cout << "Reading file list" << endl;
     string dir = argv[1];
     vector<string> files = vector<string>();
-	vector<double> timestamps = vector<double>();
-    getFiles(dir, files, filetype, timestamps);
+    getFiles(dir, files, filetype);
 	
 	//Create output directory
 	if (!(boost::filesystem::exists(argv[2]))) {
@@ -118,11 +148,41 @@ int main (int argc, char** argv)
 	string outdir = argv[2];
 	
 	//Initialize the model
-	PointCloud<PointXYZRGB>::Ptr model = loadFrame(files[0], filetype);;
-	saveToPLY(model, outdir + files[0].substr(0,files[0].size()-4));
+	PointCloud<PointXYZRGB>::Ptr model = loadFrame(files[0], filetype);
+	saveToPLY(model, outdir + files[0].substr(files[0].find_last_of("/\\")+1,files[0].size()-4));
 	
-	PointCloud<PointXYZRGB>::Ptr frame;
+	//Initialize transformation from points in frame to points in model
+	Eigen::Matrix4f current_transformation = Eigen::Matrix4f::Identity();
 	
+	for (size_t i=offset; i<files.size() && i<=max_frames; i+=offset) {
+		cout << "Registering frame " << i << endl;
+		//load frame
+		PointCloud<PointXYZRGB>::Ptr frame = loadFrame(files[i], filetype);
+		//transform according to current transformation
+		pcl::transformPointCloud(*frame, *frame, current_transformation);
+		
+		//Do the registration and update the transformation
+		Eigen::Matrix4f transformation = registerFrame(frame, model, registration_method, use_icp);
+		current_transformation = transformation * current_transformation;
+		
+		//Write the registered frame:
+		saveToPLY(frame, outdir + files[i].substr(files[i].find_last_of("/\\")+1,files[i].size()-4));
+		
+		//Get the model for the next registration step
+		if (model_mode == PREVIOUS) {
+			*model = *frame;
+		}
+		else if (model_mode == ADD) {
+			*model = *model + *frame;
+		}
+		else if (model_mode == RESAMPLE) {
+			*model = *model + *frame;
+			VoxelGrid<PointXYZRGB> downsample_filter;
+			downsample_filter.setLeafSize (VOXEL_GRID_SIZE, VOXEL_GRID_SIZE, VOXEL_GRID_SIZE);
+			downsample_filter.setInputCloud (model);
+			downsample_filter.filter (*model);
+		}
+	}
 	
 	
     return 0;	
