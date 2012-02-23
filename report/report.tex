@@ -70,17 +70,21 @@ An alternative to \ac{ICP} based registration is feature-based registration in w
 
 \subsubsection{Global registration}
 
+Global registration is the problem of reconstructing a global model from a sequence of frames. Each frame has to be registered to a global coordinate system, generally defined by the axes of the first frame of the sequence. One challenge in applying registration algorithms to this problem is that errors in pairwise registration accumulate over time. Other challenges associated with global registration are integrating the registered noisy measurements into a smooth global model and dealing with dynamic scenes in which objects move between frames.
 
-%Explain the challenges of global registration: error buildup, creating a noise-free model, dynamic scenes
-
-In \cite{izadi2011kinectfusion,newcombe2011kinectfusion} \ac{ICP} is used to register depth frames captured using a Kinect camera to build a global model. For the model they use the volumetric representation described in \cite{curless1996volumetric}. 
+In the KinectFusion project presented in \cite{izadi2011kinectfusion,newcombe2011kinectfusion} \ac{ICP} is used to register depth frames captured using a Kinect camera to build a global model. For the model they use the volumetric representation described in \cite{curless1996volumetric}. 
 %Explain how this deals with registration noise and error build up.
 
 \subsubsection{\ac{SLAM}}
 
-As mentioned before, the registration step that we focus on in this report provides us with all the information needed to perform \ac{SLAM}. By finding the relative transformation between frames we can compute the new position of the camera (localization), and by merging the 3D images we create a map of the environment. However, though the registration step is essential, it is far from sufficient for good localization. The most notable problem is the \emph{error buildup}; cumulative errors in the registration steps cause an ever greater error in the final position estimation. This can lead to a defective \emph{loop closing}: when the sensor comes to a place it has been before, the built-up error will almost surely cause this to be registered as a different position from the original one. If this d\'ej\`a-vu can be detected at all, it is still necessary to re-register all earlier frames so that the loop is ``straightened out''.
+<<<<<<< HEAD
+As mentioned before, the registration step that we focus on in this report provides us with all the information needed to perform \ac{SLAM}. By finding the relative transformation between frames we can compute the new position of the camera (localization), and by merging the 3D images we create a map of the environment. This is also know as \emph{visual odometry} and a more complete overview can be found in \cite{scaramuzzavisual,fraundorfervisual}. Like global registration, it suffers from the accumulated error from pairwise registration and is generally combined with global optimization techniques such as loop closing to generate an accurate camera trajectory. However, though the registration step is essential, it is far from sufficient for good localization. The most notable problem is the \emph{error buildup}; cumulative errors in the registration steps cause an ever greater error in the final position estimation. This can lead to a defective \emph{loop closing}: when the sensor comes to a place it has been before, the built-up error will almost surely cause this to be registered as a different position from the original one. If this d\'ej\`a-vu can be detected at all, it is still necessary to re-register all earlier frames so that the loop is ``straightened out''.
 
-%Explain the challenges of SLAM: error buildup, global optimization of path, loop closing
+%In \cite{pfingsthorn2008scalable} \ac{WSM} is combined with loop closing and a manifold data structure?
+
+In \cite{slamet2008boosting} \ac{ICP} and \ac{WSM} are applied to solve the \ac{SLAM} problem in 2D, but instead of registering each frame to the previous frame they store all registered frames in a quad tree and register the frames against multiple previously registered frames. They show that this leads to better results than incremental pair-wise registration of frames.
+
+In \cite{nuchter20076d} \ac{ICP} is used on point cloud data to solve the \ac{SLAM} problem in 3D. They use a cached version of the kd-tree data structure to make this feasible in real-time. They state that in combination with loop closing and model refinement this leads to accurate results.
 
 \section{Experiments}
 
