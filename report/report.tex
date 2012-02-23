@@ -64,14 +64,16 @@ An alternative to \ac{ICP} based registration is feature-based registration in w
 
 \subsubsection{Global registration}
 
-%Explain the challenges of global registration: error buildup, creating a noise-free model, dynamic scenes
+Global registration is the problem of reconstructing a global model from a sequence of frames. Each frame has to be registered to a global coordinate system, generally defined by the axes of the first frame of the sequence. One challenge in applying registration algorithms to this problem is that errors in pairwise registration accumulate over time. Other challenges associated with global registration are integrating the registered noisy measurements into a smooth global model and dealing with dynamic scenes in which objects move between frames.
 
 In \cite{izadi2011kinectfusion,newcombe2011kinectfusion} \ac{ICP} is used to register depth frames captured using a Kinect camera to build a global model. For the model they use the volumetric representation described in \cite{curless1996volumetric}. 
 %Explain how this deals with registration noise and error build up.
 
 \subsubsection{\ac{SLAM}}
 
-%Explain the challenges of SLAM: error buildup, global optimization of path, loop closing
+Registration can also be applied to the \ac{SLAM} problem, since the transformation between camera poses is the inverse of the transformation between the captured point clouds. This is also know as \emph{visual odometry} and a more complete overview can be found in \cite{scaramuzzavisual,fraundorfervisual}. Like global registration, it suffers from the accumulated error from pairwise registration and is generally combined with global optimization techniques such as loop closing to generate an accurate camera trajectory. 
+
+
 
 \section{Experiments}
 
