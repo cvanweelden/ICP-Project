@@ -57,12 +57,19 @@ In a sense, Generalized-ICP and \ac{WSM} are similar in that they make an explic
 
 An alternative to \ac{ICP} based registration is feature-based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space, usually combined with \ac{RANSAC}. In stead of matching each point in the cloud to it's closest neighbour, characteristic points are extracted, and a feature \emph{descriptor} is calculated for each. Based on these descriptors, the feature points are matched to their counterparts in the other frame to get a number of \emph{correspondences}. Not all these correspondences may be correct though, so \ac{RANSAC} is often used to filter the outliers. 
 
-\cite{rusu2009fast} describes such an approach. In it, \ac{PFH} are used as feature descriptors. For each point, these features are based on the properties of points in its neighborhood. To speed up the matching and make it more robust, only \emph{unique} feature points are selected, i.e. points whose descriptors are different from the mean descriptor. \ac{RANSAC} is then used to find the best feature point correspondences.  
+\cite{rusu2009fast} describes such an approach. In it, \ac{PFH} are used as feature descriptors. For each point, these features are based on the properties of points in its neighborhood. To elaborate, every pair of points within the neighborhood (Figure~\ref{fig:fpfh}) generates a number of features based on their angle with respect to the local normal. Because the number of neighbors can vary, a histogram is created. Initially, every single point is used to generate a descriptor. Then, to speed up the matching and make it more robust, only \emph{unique} feature points are selected, i.e. points whose descriptors are different from the mean descriptor. \ac{RANSAC} is then used to find the best feature point correspondences.  
 
+\begin{figure}[htbp]
+    \centering
+        \includegraphics[height=4cm]{ims/fpfh.jpg}
+    \caption{The PFH dependency diagram (image from \cite{rusu2009fast}). It indicates that every pair of points in the neighborhood generates features.}
+    \label{fig:fpfh}
+\end{figure}
 
 \subsection{Applications}
 
 \subsubsection{Global registration}
+
 
 %Explain the challenges of global registration: error buildup, creating a noise-free model, dynamic scenes
 
@@ -70,6 +77,8 @@ In \cite{izadi2011kinectfusion,newcombe2011kinectfusion} \ac{ICP} is used to reg
 %Explain how this deals with registration noise and error build up.
 
 \subsubsection{\ac{SLAM}}
+
+As mentioned before, the registration step that we focus on in this report provides us with all the information needed to perform \ac{SLAM}. By finding the relative transformation between frames we can compute the new position of the camera (localization), and by merging the 3D images we create a map of the environment. However, though the registration step is essential, it is far from sufficient for good localization. The most notable problem is the \emph{error buildup}; cumulative errors in the registration steps cause an ever greater error in the final position estimation. This can lead to a defective \emph{loop closing}: when the sensor comes to a place it has been before, the built-up error will almost surely cause this to be registered as a different position from the original one. If this d\'ej\`a-vu can be detected at all, it is still necessary to re-register all earlier frames so that the loop is ``straightened out''.
 
 %Explain the challenges of SLAM: error buildup, global optimization of path, loop closing
 
