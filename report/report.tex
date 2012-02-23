@@ -6,6 +6,7 @@
 \usepackage{float}
 \usepackage{acronym}
 \usepackage{cite}
+\usepackage{url}
 \usepackage[usenames, pdftex]{color}
 
 \acrodef{WSM}[WSM]{Weighted Scan Matching}
@@ -78,7 +79,9 @@ The rest of our experiments focus on the advantages of using feature-based regis
 
 \subsection{Datasets}
 
-As our dataset we chose an RGB-D dataset recorded by \cite{sturm11rss-rgbd}, in addition to the RGB-D feed, it contains a ground-truth for the camera's position, making it easier to evaluate our results. Moreover, this dataset was recorded with a relatively steady movement of the RGB-D sensor, so that the magnitude of the translation is constant.
+We use two RGB-D datasets from the benchmark presented in \cite{sturm11rss-rgbd}. In addition to the RGB-D data, it contains a ground truth for the camera's position obtained using a motion capture system which we use for evaluation. Both datasets are captured as an indoor scene around a desk with several objects on it.
+
+The specific datasets that we use are \texttt{freiburg2\_xyz} and \texttt{freiburg1\_desk}\footnote{Available at \url{http://cvpr.in.tum.de/data/datasets/rgbd-dataset}}. The \texttt{xyz} dataset was recorded with a slow and steady movement of the RGB-D sensor, so that the magnitude of the translation is constant. Rotation is kept to a minimum. The \texttt{desk} dataset is recorded with much faster movement, leading to larger differences between subsequent frames as well as motion blur and rolling shutter effects. It contains both translation and rotation between frames.
 
 \subsection{Implementation}
 
