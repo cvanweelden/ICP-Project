@@ -103,7 +103,11 @@ The specific datasets that we use are \texttt{freiburg2\_xyz} and \texttt{freibu
 
 \subsection{Implementation}
 
-For our implementation we use \ac{PCL} \cite{Rusu_ICRA2011_PCL}. We use the standard \ac{ICP} implementation provided by this library with a maximum of 25 iterations and maximum correspondence distance of 0.25m. For our feature based method we use the implementation of the \ac{SAC-IA} method from \cite{rusu2009fast} as implemented for this library\footnote{This implementation does not apply the Levenberg-Marquardt algorithm as described in the paper. In stead, we apply the \ac{ICP} algorithm as final refinement.}, limited to 1000 iterations with a maximum correspondence distance of 0.1m and minimum distance of 0.5m between the samples used for the \ac{RANSAC} method. For the \ac{FPFH} features we use a radius of 0.1m for normal estimation and 0.5m for feature computation. In all cases we remove sparse outliers by removing all points whose mean distance to its 50 nearest neighbors is more than one standard deviation from the overall mean and we subsample by taking one point for each 5cm$^3$ voxel.
+For our implementation we use \ac{PCL} \cite{Rusu_ICRA2011_PCL}. We use the standard \ac{ICP} implementation provided by this library with a maximum of 25 iterations and maximum correspondence distance of 0.25m. We refer to this method in our figures as \texttt{ICP}.
+
+ For our feature based method we use the implementation of the \ac{SAC-IA} method from \cite{rusu2009fast} as implemented for this library, limited to 1000 iterations with a maximum correspondence distance of 0.1m and minimum distance of 0.5m between the samples used for the \ac{RANSAC} method. For the \ac{FPFH} features we use a radius of 0.1m for normal estimation and 0.5m for feature computation. This implementation does not apply the Levenberg-Marquardt algorithm as described in \cite{rusu2009fast}. In stead, we test this method without refinement after the feature-based alignment and with the ICP-based refinement. We refer to these methods as \texttt{FPFH} and \texttt{FPFH-ICP} respectively.
+ 
+ In all cases we remove sparse outliers by removing all points whose mean distance to its 50 nearest neighbors is more than one standard deviation from the overall mean and we subsample by taking one point for each 5cm$^3$ voxel.
 
 
 
@@ -114,9 +118,19 @@ For our implementation we use \ac{PCL} \cite{Rusu_ICRA2011_PCL}. We use the stan
 
 The registration step registers a pair of frames with a certain error (which we investigate in section \ref{registration_error}. For global registration and \ac{SLAM} this error accumulates as frames are sequentially registered to previously registered frames. One way to deal with this problem is by skipping frames. Registering fewer frames means accumulating less error, but the overlap between the frames need to be large enough for successful registration. 
 
-We investigate the effect of skipping frames by looking at the registration error after a fixed duration with varying offsets between registered frames. We calculate the mean error over 50 segments of 2 seconds starting at frame 1 to 50 for the \texttt{freiburg2\_xyz} and \texttt{freiburg1\_desk} datasets.
+We investigate the effect of skipping frames by looking at the registration error after a fixed duration with varying offsets between registered frames. We calculate the mean error over 50 segments of 1 second starting at frame 1 to 50 for the \texttt{freiburg2\_xyz} and \texttt{freiburg1\_desk} datasets.
 
 \subsubsection{Results}
+
+Figure \ref{accumulated_rotation_error} shows the accumulated error in orientation after registering frames over 1 second for both datasets. It shows that increasing the number of frames skipped reduces the accumulated error for the feature-based methods (FPFH
+
+
+%\begin{figure}[htbp]
+%    \centering
+%        \includegraphics[height=4cm]{ims/ WELKE
+%    \caption{The PFH dependency diagram (image from \cite{rusu2009fast}). It indicates that every pair of points in the neighborhood generates features.}
+%    \label{fig:accumulated_error}
+%\end{figure}
 
 
 \subsection{Registration error}
