@@ -1,4 +1,4 @@
-function plot_eval(eval_files, methods, num_frames)
+function plot_eval(eval_files, methods, num_frames, xrange, fnds)
 %Plot the mean error and magnitude of the estimated translations for each
 %frameskip offset and the acumulated error over NUM_FRAMES frames.
 %EVAL_FILES is a cell array with filepaths for the files generated with
@@ -18,7 +18,6 @@ end
 frameskip = offsets - 1; %frameskip 0 means use offset 1 during registration
 
 %Plot all the data
-fnds = 'desk';
 fmt = '.png';
 dir = '../report/ims';
 
@@ -26,7 +25,8 @@ dir = '../report/ims';
 % Global opts
 lineopts = {'LineWidth',2};
 lns = {'b--', 'g-.', 'r:', 'k-'}
-pos = [0 0 5 3.5];
+pos = [0 0 4.5 3.2];
+axisrange = [0 xrange 0 1];
 
 figtitle = 'Rotation error';
 figure;
@@ -38,8 +38,10 @@ for i = 1:num_methods
     plot(eq{i}, lns{i}, lineopts{:});
 end
 legend(methods, 'Location', 'NorthWest');
+axis(axisrange);
+axis 'auto y';
 set(gcf, 'PaperPosition', pos);
-saveas(gcf, fullfile(dir,[fnds ' - ' figtitle fmt]));
+saveas(gcf, fullfile(dir, regexprep([fnds figtitle fmt], ' ','')));
 
 
 
@@ -53,8 +55,10 @@ for i = 1:num_methods
     plot(et{i}, lns{i}, lineopts{:});
 end
 legend(methods, 'Location', 'NorthWest');
+axis(axisrange);
+axis 'auto y';
 set(gcf, 'PaperPosition', pos);
-saveas(gcf, fullfile(dir, [fnds ' - ' figtitle fmt]));
+saveas(gcf, fullfile(dir, regexprep([fnds figtitle fmt], ' ','')));
 
 
 figtitle = 'Magnitude of estimated rotation';
@@ -68,8 +72,10 @@ for i = 1:num_methods
 end
 plot(true_dq, lns{4});
 legend([methods {'True transformation'}], 'Location', 'NorthWest');
+axis(axisrange);
+axis 'auto y';
 set(gcf, 'PaperPosition', pos);
-saveas(gcf, fullfile(dir,[fnds ' - ' figtitle fmt]));
+saveas(gcf, fullfile(dir,regexprep([fnds figtitle fmt], ' ','')));
 
 figtitle = 'Magnitude of estimated translation';
 figure;
@@ -82,8 +88,10 @@ for i = 1:num_methods
 end
 plot(true_dt, lns{4});
 legend([methods {'True transformation'}], 'Location', 'NorthWest');
+axis(axisrange);
+axis 'auto y';
 set(gcf, 'PaperPosition', pos);
-saveas(gcf, fullfile(dir,[fnds ' - ' figtitle fmt]));
+saveas(gcf, fullfile(dir,regexprep([fnds figtitle fmt], ' ','')));
 
 figtitle = ['Accumulated rotation error over ' int2str(num_frames) ' frames'];
 figure;
@@ -94,9 +102,11 @@ ylabel('Rotation error (radian)');
 for i = 1:num_methods
     plot(frameskip, cq{i}, lns{i}, lineopts{:});
 end
-legend(methods, 'Location', 'NorthWest');
+legend(methods, 'Location', 'NorthEast');
+axis(axisrange);
+axis 'auto y';
 set(gcf, 'PaperPosition', pos);
-saveas(gcf, fullfile(dir,[fnds ' - ' figtitle fmt]));
+saveas(gcf, fullfile(dir,regexprep([fnds figtitle fmt], ' ','')));
 
 figtitle = ['Accumulated translation error over ' int2str(num_frames) ' frames'];
 figure;
@@ -107,10 +117,11 @@ ylabel('Translation error (meters)');
 for i = 1:num_methods
     plot(frameskip, ct{i}, lns{i}, lineopts{:});
 end
-legend(methods, 'Location', 'NorthWest');
+legend(methods, 'Location', 'NorthEast');
+axis(axisrange);
+axis 'auto y';
 set(gcf, 'PaperPosition', pos);
-saveas(gcf, fullfile(dir,[fnds ' - ' figtitle fmt]));
+saveas(gcf, fullfile(dir,regexprep([fnds figtitle fmt], ' ','')));
 
 
-close all
 
