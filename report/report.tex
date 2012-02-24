@@ -110,8 +110,18 @@ For our implementation we use \ac{PCL} \cite{Rusu_ICRA2011_PCL}. We use the stan
  In all cases we remove sparse outliers by removing all points whose mean distance to its 50 nearest neighbors is more than one standard deviation from the overall mean and we subsample by taking one point for each 5cm$^3$ voxel.
 
 
+\subsection{Results}
 
+Using \ac{FPFH} with \ac{ICP} we registered frames from the two datasets as well as from two datasets that we recorded ourselves. This section presents some of the qualitative results before we evaluate against the benchmark ground truth in the following sections.
 
+Figure \ref{fig:xyz_results} shows the result of registering the first [[how many?]] frames of the \texttt{xyz} dataset. We can clearly see the effect of errors in the pairwise registration where, after a single mis-estimation of the transformation between frames, all following frames are also badly registered, resulting in duplicate objects such as the teddy bear behind the desk and the calibration pattern to the right.
+
+\begin{figure}[htbp]
+    \centering
+        \includegraphics[width=\textwidth]{ims/xyz_results.png}
+    \caption{Registration results on the \texttt{xyz} dataset.}
+    \label{fig:xyz_results}
+\end{figure}
 
 \subsection{Accumulated error over time}
 \label{accumulated_error}
