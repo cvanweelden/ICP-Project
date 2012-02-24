@@ -111,8 +111,6 @@ For our implementation we use \ac{PCL} \cite{Rusu_ICRA2011_PCL}. We use the stan
 
 
 
-
-
 \subsection{Accumulated error over time}
 \label{accumulated_error}
 
@@ -200,11 +198,7 @@ Figures ~\ref{fig:rotation_error} and~\ref{fig:translation_error} show that the 
 \end{figure}
 
 
-[[Grafiek die laat zien dat ICP minder iteraties nodig heeft als er een Feature-Based stap aan vooraf gaat]]
-
 \section{Discussion}
-
-% Why does pure ICP work in the other articles? How do we show this?
 
 According to Figures~\ref{fig:rotation_magnitude} and~\ref{fig:translation_magnitude} \ac{ICP} underestimates the rotation and translation. The feature-based methods do indeed come up with much larger transformation. The counterintuitive result is that the smaller transformations estimated by \ac{ICP} result in a smaller mean error, even though the ground truth transformation is larger. This seems to indicate that \ac{ICP} moves a small distance in the right direction, whereas the feature-based method performs a larger transformation that does not necessarily move it closer to the true pose. This effect might be because the feature-based method finds the \emph{wrong} feature correspondences when little overlap is available.
 
@@ -212,7 +206,7 @@ We thought that \ac{ICP} would only work with small transformations between fram
 
 The experiments show that there is an optimal selection of frames that yields the lowest error over longer periods. When simply using only every n-th frame, this is still subject to the characteristics of the dataset. It is necessary to balance the performance of single pairs with the performance over a longer time. Using a fixed and constant portion of the frames is generally a bad idea because most input data will not be homogeneous (i.e. the magnitude of the transformation between each pair of frames will usually vary). Therefore it is necessary to use a \emph{keyframe selection} method, which decides whether or not to discard each frame based on the aforementioned factors.
 
-% Why u no use color?
+In summation, it seems like it is indeed necessary to use a feature based initial alignment before refining the registration, for best results. \ac{ICP} only performs well when using very similar frames, but this will cause a large build-up of error. In all of the papers where \ac{ICP} was used without initial alignment, some extra techniques were used to prevent this.
 
 
 \bibliography{../../literature/refs}{}
