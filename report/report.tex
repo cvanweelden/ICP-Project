@@ -161,14 +161,44 @@ The translation error is given as the euclidean norm of the difference between t
 
 [[Laten zien dat de error buildup ervoor zorgt dat een globaal model een zootje wordt, op onze eigen dataset]]
 
-[[Grafiek die laat zien dat de error van A->B + B->C groter is dan van A->C, dat het dus zin heeft om frames te skippen]]
+\begin{figure}[H]
+    \centering
+        \includegraphics[width=0.49\textwidth]{ims/xyzMagnitudeofestimatedrotation.png}
+        \includegraphics[width=0.49\textwidth]{ims/deskMagnitudeofestimatedrotation.png}
+    \caption{The magnitude of the rotations estimated by the different methods on the two datasets, with \texttt{freiburg2\_xyz} on the left and \texttt{freiburg1\_desk} on the right. The x-axis represents the amount of frames between each registered pair.}
+    \label{fig:rotation_magnitude}
+\end{figure}
+
+As can be seen in Figures~\ref{fig:rotation_magnitude} and~\ref{fig:translation_magnitude}, ICP tends to estimate a smaller transformation between frames, this can be explained by the fact that ICP is likely to move to the closest local minimum. Examining the results more closely, we see that when \ac{ICP} is preceded by an initial alignment step, the results are different, this indicates that \ac{ICP} finds a \emph{different} local minimum in those cases, albeit not always a better one.
+
+\begin{figure}[H]
+    \centering
+        \includegraphics[width=0.49\textwidth]{ims/xyzMagnitudeofestimatedtranslation.png}
+        \includegraphics[width=0.49\textwidth]{ims/deskMagnitudeofestimatedtranslation.png}
+    \caption{The magnitude of the translations estimated, like Figure~\ref{fig:rotation_magnitude}. }
+    \label{fig:translation_magnitude}
+\end{figure}
 
 
-[[Grafiek die laat zien \emph{hoe groot} de transformaties zijn die ICP inschat, vergeleken bij de ground truth: misschien toont dat aan dat ICP altijd liever kleine transformaties kiest]]
-[[In dezelfde grafiek: met een feature based methode]]
+\begin{figure}[H]
+    \centering
+        \includegraphics[width=0.49\textwidth]{ims/xyzRotationerror.png}
+        \includegraphics[width=0.49\textwidth]{ims/deskRotationerror.png}
+    \caption{The rotation error, i.e. the spherical distance between the estimated rotation and the ground truth rotation, for both datasets.}
+    \label{fig:rotation_error}
+\end{figure}
 
-[[Grafiek met de gemiddelde relative error van ICP en van Feature-Based voor verschillende frameskips]]
-[[Idem, voor andere dataset]]
+Figures ~\ref{fig:rotation_error} and~\ref{fig:translation_error} show that the combination of a feature-based initial alignment with an \ac{ICP} refinement can give the best results. Interestingly, as can be seen in~\ref{fig:rotation_error} using only \ac{FPFH} performs worse than using only \ac{ICP}, but when combined it allows \ac{ICP} to find a better solution. However, when the discrepancy between frames gets larger (more frames are skipped), it seems like the \ac{FPFH} method starts failing and `drags' \ac{ICP} along with it, away from the correct solution. This is easy to see in the right figures, but we found that it also occurred on the other dataset, when skipping more frames than shown here. We think this might be caused by the fact that feature based methods are more likely to produce large transforms; making it likely that they produce large errors. 
+
+
+\begin{figure}[H]
+    \centering
+        \includegraphics[width=0.49\textwidth]{ims/xyzTranslationerror.png}
+        \includegraphics[width=0.49\textwidth]{ims/deskTranslationerror.png}
+    \caption{The translation error, i.e. the euclidian distance between the estimated translation and the ground truth translation, for both datasets.}
+    \label{fig:translation_error}
+\end{figure}
+
 
 [[Grafiek die laat zien dat ICP minder iteraties nodig heeft als er een Feature-Based stap aan vooraf gaat]]
 
