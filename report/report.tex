@@ -105,7 +105,7 @@ The specific datasets that we use are \texttt{freiburg2\_xyz} and \texttt{freibu
 
 For our implementation we use \ac{PCL} \cite{Rusu_ICRA2011_PCL}. We use the standard \ac{ICP} implementation provided by this library with a maximum of 25 iterations and maximum correspondence distance of 0.25m. We refer to this method in our figures as \texttt{ICP}.
 
- For our feature based method we use the implementation of the \ac{SAC-IA} method from \cite{rusu2009fast} as implemented for this library, limited to 1000 iterations with a maximum correspondence distance of 0.1m and minimum distance of 0.5m between the samples used for the \ac{RANSAC} method. For the \ac{FPFH} features we use a radius of 0.1m for normal estimation and 0.5m for feature computation. This implementation does not apply the Levenberg-Marquardt algorithm as described in \cite{rusu2009fast}. In stead, we test this method without refinement after the feature-based alignment and with the ICP-based refinement. We refer to these methods as \texttt{FPFH} and \texttt{FPFH-ICP} respectively.
+ For our feature based method we use the implementation of the \ac{SAC-IA} method from \cite{rusu2009fast} as implemented for this library, limited to 1000 iterations with a maximum correspondence distance of 0.1m and minimum distance of 0.5m between the samples used for the \ac{RANSAC} method. For the \ac{FPFH} features we use a radius of 0.1m for normal estimation and 0.5m for feature computation. This implementation does not apply the Levenberg-Marquardt algorithm as described in \cite{rusu2009fast}. In stead, we test this method without refinement after the feature-based alignment and with the ICP-based refinement. We refer to these methods as \texttt{FPFH} and \texttt{FPFH+ICP} respectively.
  
  In all cases we remove sparse outliers by removing all points whose mean distance to its 50 nearest neighbors is more than one standard deviation from the overall mean and we subsample by taking one point for each 5cm$^3$ voxel.
 
@@ -122,16 +122,29 @@ We investigate the effect of skipping frames by looking at the registration erro
 
 \subsubsection{Results}
 
-Figure \ref{accumulated_rotation_error} shows the accumulated error in orientation after registering frames over 1 second for both datasets. It shows that increasing the number of frames skipped reduces the accumulated error for the feature-based methods (FPFH
+Figure \ref{fig:accumulated_rotation_error} shows the error in orientation after registering frames over 1 second for both datasets. The left graph shows the  \texttt{freiburg2\_xyz} and clearly shows the error decreasing for the \ac{FPFH} method, although when using \ac{ICP} the effect is less noticeable. All the methods perform well with high frameskip since the movement in this dataset is small enough such that frames have considerable overlap even if the duration between the frames being captured was large.
 
+With the \texttt{freiburg1\_desk} dataset (graph on the right) we see that increasing the number of frames skipped reduces the accumulated error for the feature-based methods up to a point where the error starts to increase over the base level for registering all frame pairs. Overlap between frames in this dataset is much smaller because of the faster movement of the camera and thus larger transformations between camera poses. Therefor frames farther apart are harder to register and we see a trade off between limiting the amount of error accumulated over consecutive transformations and the error in the registrations themselves. Compared to \ac{ICP} the feature-based methods are better able to handle large transformations and thus have a more favorable balance between these two sources of error. 
 
-%\begin{figure}[htbp]
-%    \centering
-%        \includegraphics[height=4cm]{ims/ WELKE
-%    \caption{The PFH dependency diagram (image from \cite{rusu2009fast}). It indicates that every pair of points in the neighborhood generates features.}
-%    \label{fig:accumulated_error}
-%\end{figure}
+\begin{figure}[htbp]
+    \centering
+        \includegraphics[width=0.49\textwidth]{ims/xyzAccumulatedrotationerrorover30frames.png}
+        \includegraphics[width=0.49\textwidth]{ims/deskAccumulatedrotationerrorover30frames.png}
+    \caption{Rotation error after registering 30 consecutive frames (1 second) for the  \texttt{freiburg2\_xyz} dataset on the left and the \texttt{freiburg1\_desk} on the right.}
+    \label{fig:accumulated_rotation_error}
+\end{figure}
 
+Figure \ref{fig:accumulated_translation_error} shows the translation error after registration for the same runs. The results show the same behavior as the results for the translation error. 
+
+\begin{figure}[htbp]
+    \centering
+        \includegraphics[width=0.49\textwidth]{ims/xyzAccumulatedtranslationerrorover30frames.png}
+        \includegraphics[width=0.49\textwidth]{ims/deskAccumulatedtranslationerrorover30frames.png}
+    \caption{Translation error after registering 30 consecutive frames (1 second) for the  \texttt{freiburg2\_xyz} dataset on the left and the \texttt{freiburg1\_desk} on the right.}
+    \label{fig:accumulated_translation_error}
+\end{figure}
+
+These results show that the optimal value for the offset between registered frames is dependent on the dataset, specifically on how large the transformations between poses are, and how well the method can handle frame pairs with small overlap.
 
 \subsection{Registration error}
 \label{registration_error}
@@ -149,15 +162,6 @@ The translation error is given as the euclidean norm of the difference between t
 [[Laten zien dat de error buildup ervoor zorgt dat een globaal model een zootje wordt, op onze eigen dataset]]
 
 [[Grafiek die laat zien dat de error van A->B + B->C groter is dan van A->C, dat het dus zin heeft om frames te skippen]]
-
-\begin{figure}[H]
-    \centering
-        \includegraphics[width=0.49\textwidth]{ims/deskAccumulatedrotationerrorover30frames.png}
-        \includegraphics[width=0.49\textwidth]{ims/deskAccumulatedtranslationerrorover30frames.png}
-    \caption{caption}
-    \label{fig:ims_desk - Accumulated rotation error over 30 frames}
-\end{figure}
-
 
 
 [[Grafiek die laat zien \emph{hoe groot} de transformaties zijn die ICP inschat, vergeleken bij de ground truth: misschien toont dat aan dat ICP altijd liever kleine transformaties kiest]]
