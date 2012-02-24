@@ -126,15 +126,15 @@ Figure \ref{fig:xyz_results} shows the result of registering the first [[how man
 \subsection{Accumulated error over time}
 \label{accumulated_error}
 
-The registration step registers a pair of frames with a certain error (which we investigate in section \ref{registration_error}. For global registration and \ac{SLAM} this error accumulates as frames are sequentially registered to previously registered frames. One way to deal with this problem is by skipping frames. Registering fewer frames means accumulating less error, but the overlap between the frames need to be large enough for successful registration. 
+The registration step registers a pair of frames with a certain error (which we investigate in section \ref{registration_error}. For global registration and \ac{SLAM} this error accumulates as frames are sequentially registered to previously registered frames. One way to deal with this problem is by skipping frames. Registering fewer frames means accumulating less error, but the overlap between each pair of frames needs to be large enough for successful registration. 
 
 We investigate the effect of skipping frames by looking at the registration error after a fixed duration with varying offsets between registered frames. We calculate the mean error over 50 segments of 1 second starting at frame 1 to 50 for the \texttt{freiburg2\_xyz} and \texttt{freiburg1\_desk} datasets.
 
 \subsubsection{Results}
 
-Figure \ref{fig:accumulated_rotation_error} shows the error in orientation after registering frames over 1 second for both datasets. The left graph shows the  \texttt{freiburg2\_xyz} and clearly shows the error decreasing for the \ac{FPFH} method, although when using \ac{ICP} the effect is less noticeable. All the methods perform well with high frameskip since the movement in this dataset is small enough such that frames have considerable overlap even if the duration between the frames being captured was large.
+Figure \ref{fig:accumulated_rotation_error} shows the error in orientation after registering frames over 1 second for both datasets. The left graph shows the \texttt{freiburg2\_xyz} and clearly shows the error decreasing for the \ac{FPFH} method, although when using \ac{ICP} the effect is less noticeable. All the methods perform well with high frameskip since the movement in this dataset is small enough such that frames have considerable overlap even if the duration between the frames being captured was large.
 
-With the \texttt{freiburg1\_desk} dataset (graph on the right) we see that increasing the number of frames skipped reduces the accumulated error for the feature-based methods up to a point where the error starts to increase over the base level for registering all frame pairs. Overlap between frames in this dataset is much smaller because of the faster movement of the camera and thus larger transformations between camera poses. Therefor frames farther apart are harder to register and we see a trade off between limiting the amount of error accumulated over consecutive transformations and the error in the registrations themselves. Compared to \ac{ICP} the feature-based methods are better able to handle large transformations and thus have a more favorable balance between these two sources of error. 
+With the \texttt{freiburg1\_desk} dataset (graph on the right) we see that increasing the number of frames skipped reduces the accumulated error for the feature-based methods up to a point where the error starts to increase over the base level for registering all frame pairs. Overlap between frames in this dataset is much smaller because of the faster movement of the camera. The frames are harder to register and we see a tradeoff between limiting the amount of error accumulated over consecutive transformations and the error in the registrations themselves. Compared to \ac{ICP} the feature-based methods are better able to handle large transformations and thus have a more favorable balance between these two sources of error.
 
 \begin{figure}[htbp]
     \centering
@@ -210,15 +210,15 @@ Figures ~\ref{fig:rotation_error} and~\ref{fig:translation_error} show that the 
 \end{figure}
 
 
-[[Grafiek die laat zien dat ICP minder iteraties nodig heeft als er een Feature-Based stap aan vooraf gaat]]
-
 \section{Discussion}
 
-% Why does pure ICP work in the other articles? How do we show this?
+According to Figures~\ref{fig:rotation_magnitude} and~\ref{fig:translation_magnitude} \ac{ICP} underestimates the rotation and translation. The feature-based methods do indeed come up with much larger transformation. The counterintuitive result is that the smaller transformations estimated by \ac{ICP} result in a smaller mean error, even though the ground truth transformation is larger. This seems to indicate that \ac{ICP} moves a small distance in the right direction, whereas the feature-based method performs a larger transformation that does not necessarily move it closer to the true pose. This effect might be because the feature-based method finds the \emph{wrong} feature correspondences when little overlap is available.
 
-% Analysis of featurebased methods
+We thought that \ac{ICP} would only work with small transformations between frames, and that it's effectiveness would decrease with increasing discrepancy between frames. This seemed to be the case when we did a qualitative analysis of the registration results by viewing the global models. For this reason we thought that using fewer frames to reduce the error buildup would be detrimental to \ac{ICP}'s performance. However, this hypothesis does not seem to be confirmed by our experiments.
 
-% Why u no use color?
+The experiments show that there is an optimal selection of frames that yields the lowest error over longer periods. When simply using only every n-th frame, this is still subject to the characteristics of the dataset. It is necessary to balance the performance of single pairs with the performance over a longer time. Using a fixed and constant portion of the frames is generally a bad idea because most input data will not be homogeneous (i.e. the magnitude of the transformation between each pair of frames will usually vary). Therefore it is necessary to use a \emph{keyframe selection} method, which decides whether or not to discard each frame based on the aforementioned factors.
+
+In summation, it seems like it is indeed necessary to use a feature based initial alignment before refining the registration, for best results. \ac{ICP} only performs well when using very similar frames, but this will cause a large build-up of error. In all of the papers where \ac{ICP} was used without initial alignment, some extra techniques were used to prevent this.
 
 
 \bibliography{../../literature/refs}{}
