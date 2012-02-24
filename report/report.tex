@@ -61,12 +61,12 @@ An alternative to \ac{ICP} based registration is feature-based registration in w
 
 \cite{rusu2009fast} describes such an approach. In it, \ac{PFH} are used as feature descriptors. For each point, these features are based on the properties of points in its neighborhood. To elaborate, every pair of points within the neighborhood (Figure~\ref{fig:fpfh}) generates a number of features based on their angle with respect to the local normal. Because the number of neighbors can vary, a histogram is created. Initially, every single point is used to generate a descriptor. Then, to speed up the matching and make it more robust, only \emph{unique} feature points are selected, i.e. points whose descriptors are different from the mean descriptor. \ac{RANSAC} is then used to find the best feature point correspondences.  
 
-\begin{figure}[htbp]
-    \centering
-        \includegraphics[height=4cm]{ims/fpfh.jpg}
-    \caption{The PFH dependency diagram (image from \cite{rusu2009fast}). It indicates that every pair of points in the neighborhood generates features.}
-    \label{fig:fpfh}
-\end{figure}
+%\begin{figure}[htbp]
+%    \centering
+%        \includegraphics[height=4cm]{ims/fpfh.jpg}
+%    \caption{The PFH dependency diagram (image from \cite{rusu2009fast}). It indicates that every pair of points in the neighborhood generates features.}
+%    \label{fig:fpfh}
+%\end{figure}
 
 \subsection{Applications}
 
@@ -79,7 +79,6 @@ In the KinectFusion project presented in \cite{izadi2011kinectfusion,newcombe201
 
 \subsubsection{\ac{SLAM}}
 
-<<<<<<< HEAD
 As mentioned before, the registration step that we focus on in this report provides us with all the information needed to perform \ac{SLAM}. By finding the relative transformation between frames we can compute the new position of the camera (localization), and by merging the 3D images we create a map of the environment. This is also know as \emph{visual odometry} and a more complete overview can be found in \cite{scaramuzzavisual,fraundorfervisual}. Like global registration, it suffers from the accumulated error from pairwise registration and is generally combined with global optimization techniques such as loop closing to generate an accurate camera trajectory. However, though the registration step is essential, it is far from sufficient for good localization. The most notable problem is the \emph{error buildup}; cumulative errors in the registration steps cause an ever greater error in the final position estimation. This can lead to a defective \emph{loop closing}: when the sensor comes to a place it has been before, the built-up error will almost surely cause this to be registered as a different position from the original one. If this d\'ej\`a-vu can be detected at all, it is still necessary to re-register all earlier frames so that the loop is ``straightened out''.
 
 %In \cite{pfingsthorn2008scalable} \ac{WSM} is combined with loop closing and a manifold data structure?
