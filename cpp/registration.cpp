@@ -44,17 +44,33 @@ PointCloud<FPFHSignature33>::Ptr getFeaturesFPFH( PointCloud<PointXYZRGB>::Ptr c
 	return features;
 }
 
-PointCloud<Normal>::Ptr getNormals( PointCloud<PointXYZRGB>::Ptr incloud )
+PointCloud<Normal>::Ptr getNormals( PointCloud<PointXYZRGB>::Ptr incloud, PointCloud<PointXYZRGB>::Ptr fullcloud )
 {	
-	PointCloud<Normal>::Ptr normalsPtr = PointCloud<Normal>::Ptr (new PointCloud<Normal>);
-	NormalEstimation<PointXYZRGB, Normal> norm_est;
-	norm_est.setInputCloud( incloud );
-	norm_est.setRadiusSearch( NORMALS_RADIUS );
-	norm_est.compute( *normalsPtr );
-	return normalsPtr;
+	// Create the normal estimation class, and pass the input dataset to it
+	NormalEstimation<PointXYZRGB, Normal> ne;
+	ne.setInputCloud (incloud);
+	
+	// Pass the original data (before downsampling) as the search surface
+	ne.setSearchSurface (fullcloud);
+	
+	// Create an empty kdtree representation, and pass it to the normal estimation object.
+	// Its content will be filled inside the object, based on the given surface dataset.
+	pcl::search::KdTree<PointXYZRGB>::Ptr tree (new pcl::search::KdTree<PointXYZRGB> ());
+	ne.setSearchMethod (tree);
+	
+	// Output datasets
+	PointCloud<Normal>::Ptr cloud_normals (new PointCloud<Normal>);
+	
+	// Use all neighbors in a sphere of radius 3cm
+	ne.setRadiusSearch (NORMALS_RADIUS);
+	
+	// Compute the features
+	ne.compute (*cloud_normals);
+	
+	return cloud_normals;
 }
 
-PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype, float downsample_size)
+PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype)
 {
 	PointCloud<PointXYZRGB>::Ptr frame (new PointCloud<PointXYZRGB>);
 	
@@ -76,38 +92,49 @@ PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype, float 
 	outlier_filter.setInputCloud (frame);
 	outlier_filter.filter (*frame);
 	
+	return frame;
+}
+
+PointCloud<PointXYZRGB>::Ptr downsample(PointCloud<PointXYZRGB>::Ptr frame, float downsample_size)
+{
+	PointCloud<PointXYZRGB>::Ptr sampled_frame (new PointCloud<PointXYZRGB>);
+	
 	// Downsample using voxelgrid
 	VoxelGrid<PointXYZRGB> downsample_filter;
 	downsample_filter.setLeafSize (downsample_size, downsample_size, downsample_size);
 	downsample_filter.setInputCloud (frame);
-	downsample_filter.filter (*frame);
+	downsample_filter.filter (*sampled_frame);
 	
-	return frame;
+	return sampled_frame;
 }
 
-/* Registers the frame (and also transforms it, I think).
+/* Registers the frame and also transforms it (changing the input frame).
  */
 Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame,
 							  PointCloud<PointXYZRGB>::Ptr model,
 							  Method initial_method,
-							  bool use_ICP)
+							  bool use_ICP, float downsample_size)
 {
 	Eigen::Matrix4f transformation = Eigen::Matrix4f::Identity();
+
+	//Downsample the input clouds
+	PointCloud<PointXYZRGB>::Ptr sampled_model = downsample(model, downsample_size);
+	PointCloud<PointXYZRGB>::Ptr sampled_frame = downsample(frame, downsample_size);
 	
 	if (initial_method == FPFH) {
 		//Compute normals
-		PointCloud<Normal>::Ptr model_normals = getNormals( model );
-		PointCloud<Normal>::Ptr frame_normals = getNormals( frame );
+		PointCloud<Normal>::Ptr model_normals = getNormals( sampled_model, model );
+		PointCloud<Normal>::Ptr frame_normals = getNormals( sampled_frame, frame );
 		
 		//Compute FPFH features
-		PointCloud<FPFHSignature33>::Ptr model_features= getFeaturesFPFH( model, model_normals );
-		PointCloud<FPFHSignature33>::Ptr frame_features= getFeaturesFPFH( frame, frame_normals );
+		PointCloud<FPFHSignature33>::Ptr model_features= getFeaturesFPFH( sampled_model, model_normals );
+		PointCloud<FPFHSignature33>::Ptr frame_features= getFeaturesFPFH( sampled_frame, frame_normals );
 		
 		//Initialize allignment method
 		SampleConsensusInitialAlignment<PointXYZRGB, PointXYZRGB, FPFHSignature33> sac_ia;
-		sac_ia.setInputCloud( frame );
+		sac_ia.setInputCloud( sampled_frame );
 		sac_ia.setSourceFeatures( frame_features );
-		sac_ia.setInputTarget( model );
+		sac_ia.setInputTarget( sampled_model );
 		sac_ia.setTargetFeatures( model_features );
 		
 		//Set parameters for allignment and RANSAC
@@ -116,7 +143,7 @@ Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame,
 		sac_ia.setMaximumIterations( SAC_MAX_ITERATIONS );
 		
 		//Allign frame using FPFH features
-		sac_ia.align( *frame );
+		sac_ia.align( *sampled_frame );
 		//std::cout << "Done! MSE: " << sac_ia.getFitnessScore() << endl;
 		
 		//Get the transformation
@@ -125,8 +152,8 @@ Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame,
 	
 	if (use_ICP) {
 		IterativeClosestPoint<PointXYZRGB, PointXYZRGB> icp;
-		icp.setInputCloud( frame );
-		icp.setInputTarget( model );
+		icp.setInputCloud( sampled_frame );
+		icp.setInputTarget( sampled_model );
 		
 		//Set the ICP parameters
 		icp.setMaxCorrespondenceDistance(ICP_MAX_CORRESPONDENCE_DISTANCE);
@@ -135,7 +162,7 @@ Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame,
 		icp.setEuclideanFitnessEpsilon(ICP_EUCLIDEAN_FITNESS_EPSILON);
 		
 		//Refine the allignment using ICP
-		icp.align( *frame );
+		icp.align( *sampled_frame );
 		
 		//Some debug printing
 		//std::cout << "has converged:" << icp.hasConverged() << " score: " <<
@@ -145,6 +172,7 @@ Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame,
 	}
 	
 	std::cout << "Found transformation: " << endl << transformation << std::endl;
+	pcl::transformPointCloud(*frame, *frame, transformation);
 	
 	return transformation;
 	
