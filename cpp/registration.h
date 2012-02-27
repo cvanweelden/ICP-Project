@@ -8,7 +8,7 @@ const float VOXEL_GRID_SIZE = 0.05;
 
 //FPFH feature parameters
 const double NORMALS_RADIUS = 0.1; 
-const double FEATURES_RADIUS = 0.5;
+const double FEATURES_RADIUS = 0.3;
 
 //FPFH allignment parameters
 const double SAC_MAX_CORRESPONDENCE_DIST = 0.1; 
@@ -26,10 +26,12 @@ enum Method {
 	FPFH
 };
 
-PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype, 
-									   float downsample_size=VOXEL_GRID_SIZE);
+PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype);
+
+PointCloud<PointXYZRGB>::Ptr downsample(PointCloud<PointXYZRGB>::Ptr frame, float downsample_size);
 
 Eigen::Matrix4f registerFrame( PointCloud<PointXYZRGB>::Ptr frame, 
 							  PointCloud<PointXYZRGB>::Ptr model,
 							  Method initial_method = FPFH,
-							  bool use_ICP = true);
+							  bool use_ICP = true,
+							  float downsample_size=VOXEL_GRID_SIZE);
