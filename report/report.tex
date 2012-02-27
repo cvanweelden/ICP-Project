@@ -103,7 +103,7 @@ We use two RGB-D datasets from the benchmark presented in \cite{sturm11rss-rgbd}
 
 The specific datasets that we use are \texttt{freiburg2\_xyz} and \texttt{freiburg1\_desk}\footnote{Available at \url{http://cvpr.in.tum.de/data/datasets/rgbd-dataset}}. The \texttt{xyz} dataset was recorded with a slow and steady movement of the RGB-D sensor, so that the magnitude of the translation is constant. Rotation is kept to a minimum. The \texttt{desk} dataset is recorded with much faster movement, leading to larger differences between subsequent frames as well as motion blur and rolling shutter effects. It contains both translation and rotation between frames.
 
-We also show qualitative results on two datasets that we recorded ourselves. 
+Additionally, we recorded two datasets ourselves using a Kinect sensor. The setup of this was as follows, we set up the Kinect on a wheeled cart to be able to create a stable and uniform motion. We then rode the cart around an object, trying to keep the camera pointing towards the object's center. We show qualitative results on the two datasets that we recorded ourselves.
 
 \subsection{Implementation}
 
@@ -210,7 +210,7 @@ Figures ~\ref{fig:rotation_error} and~\ref{fig:translation_error} show that the 
 \end{figure}
 
 
-\section{Discussion}
+\section{Analysis}
 
 According to Figures~\ref{fig:rotation_magnitude} and~\ref{fig:translation_magnitude} \ac{ICP} underestimates the rotation and translation. The feature-based methods do indeed come up with much larger transformation. The counterintuitive result is that the smaller transformations estimated by \ac{ICP} result in a smaller mean error, even though the ground truth transformation is larger. This seems to indicate that \ac{ICP} moves a small distance in the right direction, whereas the feature-based method performs a larger transformation that does not necessarily move it closer to the true pose. This effect might be because the feature-based method finds the \emph{wrong} feature correspondences when little overlap is available.
 
@@ -218,7 +218,12 @@ We thought that \ac{ICP} would only work with small transformations between fram
 
 The experiments show that there is an optimal selection of frames that yields the lowest error over longer periods. When simply using only every n-th frame, this is still subject to the characteristics of the dataset. It is necessary to balance the performance of single pairs with the performance over a longer time. Using a fixed and constant portion of the frames is generally a bad idea because most input data will not be homogeneous (i.e. the magnitude of the transformation between each pair of frames will usually vary). Therefore it is necessary to use a \emph{keyframe selection} method, which decides whether or not to discard each frame based on the aforementioned factors.
 
-In summation, it seems like it is indeed necessary to use a feature based initial alignment before refining the registration, for best results. \ac{ICP} only performs well when using very similar frames, but this will cause a large build-up of error. In all of the papers where \ac{ICP} was used without initial alignment, some extra techniques were used to prevent this.
+Some of the experiments seem to confirm our hypothesis that \ac{ICP} preceded by a feature-based registration step yields best results, especially when finding the optimal amount of frames to skip.
+
+\ac{ICP} only performs well when using very similar frames, but this will cause a large build-up of error. In all of the papers where \ac{ICP} was used without initial alignment, some extra techniques were used to prevent this, e.g. in \cite{izadi2011kinectfusion} a volumetric representation is used to create a global model, from which a reprojection is made to function as the model for \ac{ICP}. This global model is a compact representation that is less sensitive to the build-up of error.
+
+\section{Conclusion}
+BLABLABLAL
 
 
 \bibliography{../../literature/refs}{}
