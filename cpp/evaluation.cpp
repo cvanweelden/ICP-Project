@@ -94,7 +94,7 @@ void getGroundTruthPose(const double timestamp, const vector<double> &timestamp_
 
 int main (int argc, char** argv)
 {	
-	string usage = "usage: $evaluation <datadir> <groundtruth> <outputfile> [-t <filetype> (default: .ply)] [-d <max_frame_distance> (default: 1)] [-f <limit_frames> (default: unlimited)] [-m <registration_method{NONE,FPFH}> (default: FPFH)] [--no_icp]";
+	string usage = "usage: $evaluation <datadir> <groundtruth> <outputfile> [-t <filetype> (default: .ply)] [-s <max_frameskip_offset> (default: 1)] [-f <limit_frames> (default: unlimited)] [-r <registration_method{NONE,FPFH}> (default: FPFH)] [-fr <FPFH_feature_radius> (default: 0.3)] [-d <ICP_max_correspondence_distance> (default: 0.25)] [--no_icp]";
 	
 	int num_args = argc;
 	int max_frame_distance = 1;
@@ -103,8 +103,11 @@ int main (int argc, char** argv)
 	Method registration_method = FPFH;
 	bool use_icp = true;
 	
+	double fpfh_radius = 0.3;
+	double icp_max_dist = 0.25;
+	
 	for (int i=4; i<argc; i++) {
-		if (strcmp(argv[i],"-d") == 0) {
+		if (strcmp(argv[i],"-s") == 0) {
 			max_frame_distance = boost::lexical_cast<int>(argv[i+1]);
 			num_args -= 2;
 			i++;
@@ -119,7 +122,7 @@ int main (int argc, char** argv)
 			num_args -= 2;
 			i++;
 		}
-		else if (strcmp(argv[i],"-m") == 0) {
+		else if (strcmp(argv[i],"-r") == 0) {
 			if (strcmp(argv[i+1],"NONE") == 0) {
 				registration_method = NONE;
 			}
@@ -129,6 +132,16 @@ int main (int argc, char** argv)
 		else if (strcmp(argv[i],"--no_icp") == 0) {
 			use_icp = false;
 			num_args -= 1;
+		}
+		else if (strcmp(argv[i],"-fr") == 0) {
+			fpfh_radius = boost::lexical_cast<double>(argv[i+1]);
+			num_args -= 2;
+			i++;
+		}
+		else if (strcmp(argv[i],"-d") == 0) {
+			icp_max_dist = boost::lexical_cast<double>(argv[i+1]);
+			num_args -= 2;
+			i++;
 		}
 		else {
 			cout << "Warning! Unrecognized parameter: " << argv[i] << endl;
@@ -191,7 +204,7 @@ int main (int argc, char** argv)
 							   translation_truth, orientation2, translation2);
 			
 
-			Eigen::Matrix4f transformation = registerFrame(frame2, frame1, registration_method, use_icp);
+			Eigen::Matrix4f transformation = registerFrame(frame2, frame1, registration_method, use_icp, VOXEL_GRID_SIZE, fpfh_radius, icp_max_dist);
 			cout << "Registered frame " << i+offset << " to frame " << i << endl;
 			
 			Eigen::Matrix3f rotation;

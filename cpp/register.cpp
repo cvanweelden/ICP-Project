@@ -50,7 +50,7 @@ void saveToPLY( PointCloud<PointXYZRGB>::Ptr cloud, string filepath )
 
 int main (int argc, char** argv)
 {	
-	string usage = "usage: $register <datadir> <outputdir> [-t <filetype> (default: .ply)] [-s <frameskip> (default: 0)] [-f <limit_frames> (default: unlimited)] [-r <registration_method{NONE,FPFH}> (default: FPFH)] [-m <model_mode{PREVIOUS,RESAMPLE,ADD}> (default: PREVIOUS)] [--no_icp]";
+	string usage = "usage: $register <datadir> <outputdir> [-t <filetype> (default: .ply)] [-s <frameskip offset> (default: 1(no skipping) )] [-f <limit_frames> (default: unlimited)] [-r <registration_method{NONE,FPFH}> (default: FPFH)] [-m <model_mode{PREVIOUS,RESAMPLE,ADD}> (default: PREVIOUS)] [-fr <FPFH_feature_radius> (default: 0.3)] [-d <ICP_max_correspondence_distance> (default: 0.25)] [--no_icp]";
 	
 	int num_args = argc;
 	int offset = 1;
@@ -60,9 +60,12 @@ int main (int argc, char** argv)
 	ModelMode model_mode = PREVIOUS;
 	bool use_icp = true;
 	
+	double fpfh_radius = 0.3;
+	double icp_max_dist = 0.25;
+	
 	for (int i=3; i<argc; i++) {
 		if (strcmp(argv[i],"-s") == 0) {
-			offset = 1 + boost::lexical_cast<int>(argv[i+1]);
+			offset = boost::lexical_cast<int>(argv[i+1]);
 			num_args -= 2;
 			i++;
 		}
@@ -97,6 +100,16 @@ int main (int argc, char** argv)
 			use_icp = false;
 			num_args -= 1;
 		}
+		else if (strcmp(argv[i],"-fr") == 0) {
+			fpfh_radius = boost::lexical_cast<double>(argv[i+1]);
+			num_args -= 2;
+			i++;
+		}
+		else if (strcmp(argv[i],"-d") == 0) {
+			icp_max_dist = boost::lexical_cast<double>(argv[i+1]);
+			num_args -= 2;
+			i++;
+		}
 		else {
 			cout << "Warning! Unrecognized parameter: " << argv[i] << endl;
 			cout << usage << endl;
@@ -109,7 +122,7 @@ int main (int argc, char** argv)
 	}
 	
 	//Summary message at start
-	cout << "Registration with frameskip " << offset-1
+	cout << "Registration with frameskip offset " << offset
 	<< ", using ";
 	if (model_mode == PREVIOUS) {
 		cout << "previous frame ";
@@ -162,7 +175,7 @@ int main (int argc, char** argv)
 		pcl::transformPointCloud(*frame, *frame, current_transformation);
 		
 		//Do the registration and update the transformation
-		Eigen::Matrix4f transformation = registerFrame(frame, model, registration_method, use_icp);
+		Eigen::Matrix4f transformation = registerFrame(frame, model, registration_method, use_icp, VOXEL_GRID_SIZE, fpfh_radius, icp_max_dist);
 		current_transformation = transformation * current_transformation;
 		
 		//Write the registered frame:
