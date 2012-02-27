@@ -75,11 +75,14 @@ Global registration is the problem of reconstructing a global model from a seque
 In the KinectFusion project presented in \cite{izadi2011kinectfusion,newcombe2011kinectfusion} \ac{ICP} is used to register depth frames captured using a Kinect camera to build a global model. For the model they use the volumetric representation described in \cite{curless1996volumetric}. 
 %Explain how this deals with registration noise and error build up.
 
+\cite{henry2010rgb}
+
 \subsubsection{\ac{SLAM}}
 
 %This is also know as \emph{visual odometry} and a more complete overview can be found in \cite{scaramuzzavisual,fraundorfervisual}. 
 
-As mentioned before, the registration step that we focus on in this report provides us with all the information needed to perform \ac{SLAM} using \emph{visual odometry}. Visual odometry is the converse problem to registration: by finding the relative transformation between frames we can also compute the egomotion of the camera. In \ac{SLAM} we use this registration step for localization, and by merging the registered 3D images we create a map of the environment. However, though the registration step is essential, it is far from sufficient for good localization. The most notable problem is the \emph{error buildup}; cumulative errors in the registration steps cause an ever greater error in the final position estimation. This can lead to a defective \emph{loop closing}: when the sensor comes to a place it has been before, the built-up error will almost surely cause this to be registered as a different position from the original one. If this loop can be detected at all, it is still necessary to re-register all earlier frames so that the loop is closed. 
+As mentioned before, the registration step that we focus on in this report provides us with all the information needed to perform \ac{SLAM} using \emph{visual odometry}. Visual odometry is the converse problem to registration: by finding the relative transformation between frames we can also compute the egomotion of the camera. A tutorial overview of visual odometry methods can be found in \cite{scaramuzzavisual,fraundorfervisual}. In \ac{SLAM} we use this registration step for localization, and by merging the registered 3D images we create a map of the environment. However, though the registration step is essential, it is far from sufficient for good localization. The most notable problem is the \emph{error buildup}; cumulative errors in the registration steps cause an ever greater error in the final position estimation. This can lead to a defective \emph{loop closing}: when the sensor comes to a place it has been before, the built-up error will almost surely cause this to be registered as a different position from the original one. If this loop can be detected at all, it is still necessary to re-register all earlier frames so that the loop is closed. 
+
 %In \cite{pfingsthorn2008scalable} \ac{WSM} is combined with loop closing and a manifold data structure?
 
 In \cite{slamet2008boosting} \ac{ICP} and \ac{WSM} are applied to solve the \ac{SLAM} problem in 2D, but instead of registering each frame to the previous frame they store all registered frames in a quad tree and register the frames against multiple previously registered frames. They show that this leads to better results than incremental pair-wise registration of frames.
@@ -99,6 +102,8 @@ The rest of our experiments focus on the advantages of using feature-based regis
 We use two RGB-D datasets from the benchmark presented in \cite{sturm11rss-rgbd}. In addition to the RGB-D data, it contains a ground truth for the camera's position obtained using a motion capture system which we use for evaluation. Both datasets are captured as an indoor scene around a desk with several objects on it.
 
 The specific datasets that we use are \texttt{freiburg2\_xyz} and \texttt{freiburg1\_desk}\footnote{Available at \url{http://cvpr.in.tum.de/data/datasets/rgbd-dataset}}. The \texttt{xyz} dataset was recorded with a slow and steady movement of the RGB-D sensor, so that the magnitude of the translation is constant. Rotation is kept to a minimum. The \texttt{desk} dataset is recorded with much faster movement, leading to larger differences between subsequent frames as well as motion blur and rolling shutter effects. It contains both translation and rotation between frames.
+
+We also show qualitative results on two datasets that we recorded ourselves. 
 
 \subsection{Implementation}
 
@@ -194,6 +199,7 @@ As can be seen in Figures~\ref{fig:rotation_magnitude} and~\ref{fig:translation_
 
 Figures ~\ref{fig:rotation_error} and~\ref{fig:translation_error} show that the combination of a feature-based initial alignment with an \ac{ICP} refinement can give the best results. Interestingly, as can be seen in~\ref{fig:rotation_error} using only \ac{FPFH} performs worse than using only \ac{ICP}, but when combined it allows \ac{ICP} to find a better solution. However, when the discrepancy between frames gets larger (more frames are skipped), it seems like the \ac{FPFH} method starts failing and `drags' \ac{ICP} along with it, away from the correct solution. This is easy to see in the right figures, but we found that it also occurred on the other dataset, when skipping more frames than shown here. We think this might be caused by the fact that feature based methods are more likely to produce large transforms; making it likely that they produce large errors. 
 
+[[This is very similar to figure 3a in \cite{steinbruecker_sturm_cremers_iccv11}]]
 
 \begin{figure}[H]
     \centering
