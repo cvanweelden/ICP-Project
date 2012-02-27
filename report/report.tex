@@ -18,7 +18,7 @@
 \acrodef{PCL}[PCL]{Point Cloud Library}
 \acrodef{SAC-IA}[SAC-IA]{SAmple Consensus Initial Alignment}
 
-\title{Registration using RGB-D camera\\
+\title{Registration using a RGB-D camera\\
 {\large Project A.I. / Individual project}}
 
 \author{Carsten van Weelden \\ 0518824 \\ \texttt{cvanweelden@gmail.com} \and Thomas van den Berg \\ 5789346 \\ \texttt{Thomas.G.vandenBerg@gmail.nl} \and
@@ -77,8 +77,9 @@ In the KinectFusion project presented in \cite{izadi2011kinectfusion,newcombe201
 
 \subsubsection{\ac{SLAM}}
 
-As mentioned before, the registration step that we focus on in this report provides us with all the information needed to perform \ac{SLAM}. By finding the relative transformation between frames we can compute the new position of the camera (localization), and by merging the 3D images we create a map of the environment. This is also know as \emph{visual odometry} and a more complete overview can be found in \cite{scaramuzzavisual,fraundorfervisual}. Like global registration, it suffers from the accumulated error from pairwise registration and is generally combined with global optimization techniques such as loop closing to generate an accurate camera trajectory. However, though the registration step is essential, it is far from sufficient for good localization. The most notable problem is the \emph{error buildup}; cumulative errors in the registration steps cause an ever greater error in the final position estimation. This can lead to a defective \emph{loop closing}: when the sensor comes to a place it has been before, the built-up error will almost surely cause this to be registered as a different position from the original one. If this d\'ej\`a-vu can be detected at all, it is still necessary to re-register all earlier frames so that the loop is ``straightened out''.
+%This is also know as \emph{visual odometry} and a more complete overview can be found in \cite{scaramuzzavisual,fraundorfervisual}. 
 
+As mentioned before, the registration step that we focus on in this report provides us with all the information needed to perform \ac{SLAM} using \emph{visual odometry}. Visual odometry is the converse problem to registration: by finding the relative transformation between frames we can also compute the egomotion of the camera. In \ac{SLAM} we use this registration step for localization, and by merging the registered 3D images we create a map of the environment. However, though the registration step is essential, it is far from sufficient for good localization. The most notable problem is the \emph{error buildup}; cumulative errors in the registration steps cause an ever greater error in the final position estimation. This can lead to a defective \emph{loop closing}: when the sensor comes to a place it has been before, the built-up error will almost surely cause this to be registered as a different position from the original one. If this loop can be detected at all, it is still necessary to re-register all earlier frames so that the loop is closed. 
 %In \cite{pfingsthorn2008scalable} \ac{WSM} is combined with loop closing and a manifold data structure?
 
 In \cite{slamet2008boosting} \ac{ICP} and \ac{WSM} are applied to solve the \ac{SLAM} problem in 2D, but instead of registering each frame to the previous frame they store all registered frames in a quad tree and register the frames against multiple previously registered frames. They show that this leads to better results than incremental pair-wise registration of frames.
