@@ -161,7 +161,7 @@ These results show that the optimal value for the offset between registered fram
 We show how the error for registering a frame pair increases as the frames are farther apart by computing the rotation and translation error for frame pairs with varying offsets between frames. Here we use the frame offset as a proxy for the magnitude of the transformation, but we also show how the rotation and translation magnitudes vary with the frame offset.
 
 We calculate the rotation error as the angular distance between the true rotation $q$ and the estimated rotation $\hat q$ which we calculate as $min(\theta, 2\pi - \theta)$ where $\theta$ is the angle between the two rotations represented as quaternions: $\theta = 2 * cos^{-1}(q \cdot \hat q)$. %Dit hierboven heb ik opgeschreven omdat het nergens te vinden was.
-The translation error is given as the euclidean norm of the difference between the true and estimated translation. We compute the mean errors over 50 frame pairs for up to 2 seconds apart from the start of the \texttt{freiburg2\_xyz} and \texttt{freiburg1\_desk} datasets.
+The translation error is given as the Euclidean norm of the difference between the true and estimated translation. We compute the mean errors over 50 frame pairs for up to 2 seconds apart from the start of the \texttt{freiburg2\_xyz} and \texttt{freiburg1\_desk} datasets.
 
 \subsubsection{Results}
 
