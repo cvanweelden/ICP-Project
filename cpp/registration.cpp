@@ -46,12 +46,28 @@ PointCloud<FPFHSignature33>::Ptr getFeaturesFPFH( PointCloud<PointXYZRGB>::Ptr c
 
 PointCloud<Normal>::Ptr getNormals( PointCloud<PointXYZRGB>::Ptr incloud, PointCloud<PointXYZRGB>::Ptr fullcloud )
 {	
-	PointCloud<Normal>::Ptr normalsPtr = PointCloud<Normal>::Ptr (new PointCloud<Normal>);
-	NormalEstimation<PointXYZRGB, Normal> norm_est;
-	norm_est.setInputCloud( incloud );
-	norm_est.setRadiusSearch( NORMALS_RADIUS );
-	norm_est.compute( *normalsPtr );
-	return normalsPtr;
+	// Create the normal estimation class, and pass the input dataset to it
+	NormalEstimation<PointXYZRGB, Normal> ne;
+	ne.setInputCloud (incloud);
+	
+	// Pass the original data (before downsampling) as the search surface
+	ne.setSearchSurface (fullcloud);
+	
+	// Create an empty kdtree representation, and pass it to the normal estimation object.
+	// Its content will be filled inside the object, based on the given surface dataset.
+	pcl::search::KdTree<PointXYZRGB>::Ptr tree (new pcl::search::KdTree<PointXYZRGB> ());
+	ne.setSearchMethod (tree);
+	
+	// Output datasets
+	PointCloud<Normal>::Ptr cloud_normals (new PointCloud<Normal>);
+	
+	// Use all neighbors in a sphere of radius 3cm
+	ne.setRadiusSearch (NORMALS_RADIUS);
+	
+	// Compute the features
+	ne.compute (*cloud_normals);
+	
+	return cloud_normals;
 }
 
 PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype)
