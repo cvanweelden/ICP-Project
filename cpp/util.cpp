@@ -55,7 +55,6 @@ int getFiles (string dir, vector<string> &files, string const &extension, vector
         if (hasEnding(filename, extension)) {
             files.push_back(dir+string(dirp->d_name));
 			filename.erase(filename.size()-extension.size());
-			cout << "BLAAA";
 			timestamps.push_back(boost::lexical_cast<double>(filename));
 		}
     }
