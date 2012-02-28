@@ -35,25 +35,27 @@
 
 \section{Introduction}
 
-In this project we familiarized ourselves with methods for 3D registration of images captured with cheap RGB-D sensors such as the Kinect. A Kinect mounted on a moving robot could replace both its RGB camera and its range finder. Another application would be affordable 3D reconstructions of the insides of buildings. For these applications we need to \emph{register} consecutive frames to the same global coordinate space. In effect, we need to find the transformation that the camera made in between the captured frames. The robot's odometry can sometimes be used to get an initial estimate of the transformation, but in a scenario where the RGB-D camera is hand-held this is not possible. For this reason we focused on the registration step only. 
+In this project we familiarized ourselves with methods for 3D registration of images captured with cheap RGB-D sensors such as the Kinect. A Kinect mounted on a moving robot could replace both its RGB camera and its range finder. Another application would be affordable 3D reconstructions of objects or indoor scenes. For these applications we need to \emph{register} consecutive frames to the same global coordinate space. In effect, we need to find the transformation that the camera made in between the captured frames. %The robot's odometry can sometimes be used to get an initial estimate of the transformation, but in a scenario where the RGB-D camera is hand-held this is not possible. For this reason we focused on the registration step only. 
 
-The combined RGB and depth data forms a \emph{point cloud}: a set of 3D coordinate points indicating where the sensor measured a solid object. Assuming that there is enough overlap between each pair of consecutive point clouds, we find a good registration by finding an optimal way to fit the two clouds. We experiment with different registration methods, and report on their performance and whether it degrades under certain circumstances.
+%Assuming that there is enough overlap between each pair of consecutive point clouds, we find a good registration by finding an optimal way to fit the two clouds.
+
+%We experiment with different registration methods, and report on their performance and whether it degrades under certain circumstances.
+
+The combined RGB and depth data forms a \emph{point cloud}. A standard method or registering two overlapping point clouds is the \ac{ICP} algorithm presented in \cite{besl1992method}. In this paper we show that simply registering each consecutive pair of frames using \ac{ICP} is not sufficient for good overall registration because errors in pair-wise registration accumulate quickly. We focus on the effect of only registering a subset of captured frames. Because this increases the magnitude of the transformation between frames we show that in this case it is better to use feature-based method to provide an initial guess to the \ac{ICP} algorithm.
 
 \section{Background}
 
-\subsection{Registration}
-
-\subsubsection{ICP Based Registration}
+\subsection{ICP Based Registration}
 
 A basic method used in almost every approach to 3D registration is \ac{ICP}\cite{besl1992method}. It is an expectation maximization method that iteratively minimizes the distance between each point and its closest neighbor. Though \ac{ICP} is currently used mostly as a refinement step for more advanced algorithms, \ac{ICP} can be used as the main registration procedure in scene reconstruction \cite{izadi2011kinectfusion,newcombe2011kinectfusion} and \ac{SLAM} \cite{nuchter20076d}.
 
-In \cite{segal2009generalized}, an extension to \ac{ICP} was introduced that takes into account the local characteristics of the matched points. This Generalized-ICP gives a higher weight to point correspondence errors if they are in a direction perpendicular to the estimated plane. It is mentioned in both \cite{rusinkiewicz2001efficient} and \cite{segal2009generalized} that using this extension prevents the application of a closed-form solution to the minimization step.
+%In \cite{segal2009generalized}, an extension to \ac{ICP} was introduced that takes into account the local characteristics of the matched points. This Generalized-ICP gives a higher weight to point correspondence errors if they are in a direction perpendicular to the estimated plane. It is mentioned in both \cite{rusinkiewicz2001efficient} and \cite{segal2009generalized} that using this extension prevents the application of a closed-form solution to the minimization step.
 
-\ac{WSM} removes a simplyfying assumption from \ac{ICP}, namely that ``the range scans of different poses sample the environment's boundary at \emph{exactly} the same points''~\cite{pfister2002weighted}. In range scans, it often occurs that the points are much further apart in some areas of the model, because of the angle of the local surface or the distance from the sensor. The point-to-point error in these areas could easily be much greater, this is what the authors take into account by introducing an error which they name the \emph{correspondence error}. They model the variance of this error based on the distances to the closest model points, \cite{slamet2008boosting} give a clear illustration in their Figure 1. 
+%\ac{WSM} removes a simplyfying assumption from \ac{ICP}, namely that ``the range scans of different poses sample the environment's boundary at \emph{exactly} the same points''~\cite{pfister2002weighted}. In range scans, it often occurs that the points are much further apart in some areas of the model, because of the angle of the local surface or the distance from the sensor. The point-to-point error in these areas could easily be much greater, this is what the authors take into account by introducing an error which they name the \emph{correspondence error}. They model the variance of this error based on the distances to the closest model points, \cite{slamet2008boosting} give a clear illustration in their Figure 1. 
 
-In a sense, Generalized-ICP and \ac{WSM} are similar in that they make an explicit model of the error that the minimization step aims to minimize, based on the local characteristics. This has some clear advantages in terms of accuracy, but the extra computational costs are significant.
+%In a sense, Generalized-ICP and \ac{WSM} are similar in that they make an explicit model of the error that the minimization step aims to minimize, based on the local characteristics. This has some clear advantages in terms of accuracy, but the extra computational costs are significant.
 
-\subsubsection{Feature Based Registration}
+\subsection{Feature Based Registration}
 
 An alternative to \ac{ICP} based registration is feature-based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space, usually combined with \ac{RANSAC}. In stead of matching each point in the cloud to it's closest neighbor, characteristic points are extracted, and a feature \emph{descriptor} is calculated for each. Based on these descriptors, the feature points are matched to their counterparts in the other frame to get a number of \emph{correspondences}. Not all these correspondences may be correct though, so \ac{RANSAC} is often used to filter the outliers. 
 
