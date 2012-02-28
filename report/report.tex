@@ -70,27 +70,28 @@ The approach we use is described in \cite{rusu2009fast} and uses \ac{FPFH} as de
 %    \label{fig:fpfh}
 %\end{figure}
 
-\subsection{Global Registration}
+\subsection{Applications}
 
 Global registration is the problem of reconstructing a global model from a sequence of frames. %Each frame has to be registered to a global coordinate system, generally defined by the axes of the first frame of the sequence. 
-One challenge in applying registration algorithms to this problem is that errors in pairwise registration accumulate over time. Other challenges associated with global registration are integrating the registered noisy measurements into a smooth global model and dealing with dynamic scenes in which objects move between frames.
+One challenge in applying registration algorithms to this problem is that errors in pairwise registration accumulate over time. In \cite{henry2010rgb} a method combining feature-based registration and \ac{ICP} is described. They use global consistency checking and loop closing to deal with registration noise and a surfel map to represent the global model.
 
-In the KinectFusion project presented in \cite{izadi2011kinectfusion,newcombe2011kinectfusion} \ac{ICP} is used to register depth frames captured using a Kinect camera to build a global model. They use a volumetric representation described in \cite{curless1996volumetric} to deal with registration noise and to provide a smooth model as result.
-%Explain how this deals with registration noise and error build up.
+%Other challenges associated with global registration are integrating the registered noisy measurements into a smooth global model.
 
-In \cite{henry2010rgb} a method combining feature-based registration and \ac{ICP} is described. They use global consistency checking and loop closing to deal with registration noise and a surfel map to represent the global model.
 
-\subsection{\acf{SLAM}}
+
+%\subsection{\acf{SLAM}}
 
 %This is also know as \emph{visual odometry} and a more complete overview can be found in \cite{scaramuzzavisual,fraundorfervisual}. 
 
-As mentioned before, the registration step that we focus on in this report provides us with all the information needed to perform \ac{SLAM} using \emph{visual odometry}. Visual odometry is the converse problem to registration: by finding the relative transformation between frames we can also compute the egomotion of the camera. A tutorial overview of visual odometry methods can be found in \cite{scaramuzzavisual,fraundorfervisual}. In \ac{SLAM} we use this registration step for localization, and by merging the registered 3D images we create a map of the environment. However, though the registration step is essential, it is far from sufficient for good localization. The most notable problem is the \emph{error buildup}; cumulative errors in the registration steps cause an ever greater error in the final position estimation. This can lead to a defective \emph{loop closing}: when the sensor comes to a place it has been before, the built-up error will almost surely cause this to be registered as a different position from the original one. If this loop can be detected at all, it is still necessary to re-register all earlier frames so that the loop is closed. 
+By finding the relative transformation between frames we can also compute the egomotion of the camera\footnote{This problem is know as \emph{visual odometry} and a more complete overview can be found in \cite{scaramuzzavisual}.}, which can be used to perform \acf{SLAM}. In \cite{nuchter20076d} \ac{ICP} is used on point cloud data to solve the \ac{SLAM} problem in 3D. They use a cached version of the kd-tree data structure to make this feasible in real-time. They state that in combination with loop closing and model refinement this leads to accurate results.
+
+%As mentioned before, the registration step that we focus on in this report provides us with all the information needed to perform \ac{SLAM} using \emph{visual odometry}. Visual odometry is the converse problem to registration: by finding the relative transformation between frames we can also compute the egomotion of the camera. A tutorial overview of visual odometry methods can be found in \cite{scaramuzzavisual,fraundorfervisual}. In \ac{SLAM} we use this registration step for localization, and by merging the registered 3D images we create a map of the environment. However, though the registration step is essential, it is far from sufficient for good localization. The most notable problem is the \emph{error buildup}; cumulative errors in the registration steps cause an ever greater error in the final position estimation. This can lead to a defective \emph{loop closing}: when the sensor comes to a place it has been before, the built-up error will almost surely cause this to be registered as a different position from the original one. If this loop can be detected at all, it is still necessary to re-register all earlier frames so that the loop is closed. 
 
 %In \cite{pfingsthorn2008scalable} \ac{WSM} is combined with loop closing and a manifold data structure?
 
-In \cite{slamet2008boosting} \ac{ICP} and \ac{WSM} are applied to solve the \ac{SLAM} problem in 2D, but instead of registering each frame to the previous frame they store all registered frames in a quad tree and register the frames against multiple previously registered frames. They show that this leads to better results than incremental pair-wise registration of frames.
 
-In \cite{nuchter20076d} \ac{ICP} is used on point cloud data to solve the \ac{SLAM} problem in 3D. They use a cached version of the kd-tree data structure to make this feasible in real-time. They state that in combination with loop closing and model refinement this leads to accurate results.
+
+
 
 \section{Experiments}
 
@@ -225,6 +226,16 @@ We thought that \ac{ICP} would only work with small transformations between fram
 Some of the experiments seem to confirm our hypothesis that \ac{ICP} preceded by a feature-based registration step yields best results, especially when finding the optimal amount of frames to skip.
 
 \ac{ICP} only performs well when using very similar frames, but this will cause a large build-up of error. In all of the papers where \ac{ICP} was used without initial alignment, some extra techniques were used to prevent this, e.g. in \cite{izadi2011kinectfusion} a volumetric representation is used to create a global model, from which a reprojection is made to function as the model for \ac{ICP}. This global model is a compact representation that is less sensitive to the build-up of error.
+
+
+%%%%%%
+% PUT THIS WITH GLOBAL MODEL TEST
+%%%%%%
+
+%In \cite{slamet2008boosting} variants of \ac{ICP} are applied to solve the \ac{SLAM} problem in 2D, but instead of registering each frame to the previous frame they store all registered frames in a quad tree and register the frames against multiple previously registered frames. They show that this leads to better results than incremental pair-wise registration of frames.
+
+%In the KinectFusion project presented in \cite{izadi2011kinectfusion,newcombe2011kinectfusion} \ac{ICP} is used to register depth frames captured using a Kinect camera to build a global model. They use a volumetric representation described in \cite{curless1996volumetric} to deal with registration noise and to provide a smooth model as result.
+%Explain how this deals with registration noise and error build up.
 
 
 \bibliography{../../literature/refs}{}
