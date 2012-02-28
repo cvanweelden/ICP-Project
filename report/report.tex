@@ -11,7 +11,7 @@
 
 \acrodef{WSM}[WSM]{Weighted Scan Matching}
 \acrodef{ICP}[ICP]{Iterated Closest Point}
-\acrodef{RANSAC}[RANSAC]{Random Sample Consensus}
+\acrodef{RANSAC}[RANSAC]{RANdom SAmple Consensus}
 \acrodef{PFH}[PFH]{Point Feature Histograms}
 \acrodef{FPFH}[FPFH]{Fast Point Feature Histograms}
 \acrodef{SLAM}[SLAM]{Simultaneous Localization and Mapping}
@@ -21,7 +21,7 @@
 \title{Registration using a RGB-D camera\\
 {\large Project A.I. / Individual project}}
 
-\author{Carsten van Weelden \\ 0518824 \\ \texttt{cvanweelden@gmail.com} \and Thomas van den Berg \\ 5789346 \\ \texttt{Thomas.G.vandenBerg@gmail.nl} \and
+\author{Carsten van Weelden \\ 0518824 \\ \texttt{cvanweelden@gmail.com} \and Thomas van den Berg \\ 5789346 \\ \texttt{thomas.g.vandenberg@gmail.com} \and
  \small{Supervisor:} \\ Arnoud Visser \\ University of Amsterdam\\
   The Netherlands}
 
@@ -35,9 +35,9 @@
 
 \section{Introduction}
 
-In this project we familiarized ourselves with methods for 3D registration of images captured with cheap RGB-D sensors such as the Kinect. A Kinect mounted on a moving robot could replace both it's RGB camera and it's range finder. Another application would be affordable 3D reconstructions of the insides of buildings. For these applications we need to \emph{register} consecutive frames to the same global coordinate space. In effect, we need to find the transformation that the camera made in between the captured frames. The robot's odometry can sometimes be used to get an initial estimate of the transformation, but in a scenario where the RGB-D camera is hand-held this is not possible. For this reason we focused on the registration step only. 
+In this project we familiarized ourselves with methods for 3D registration of images captured with cheap RGB-D sensors such as the Kinect. A Kinect mounted on a moving robot could replace both its RGB camera and its range finder. Another application would be affordable 3D reconstructions of the insides of buildings. For these applications we need to \emph{register} consecutive frames to the same global coordinate space. In effect, we need to find the transformation that the camera made in between the captured frames. The robot's odometry can sometimes be used to get an initial estimate of the transformation, but in a scenario where the RGB-D camera is hand-held this is not possible. For this reason we focused on the registration step only. 
 
-The combined RGB and depth data forms a \emph{point cloud}: a set of 3D coordinate points indicating where the sensor measured a solid object. Assuming that there is enough overlap between each pair of consecutive point clouds, we find a good registration by finding an optimal way to fit the two clouds. We've experimented with different registration methods, and we'll report on their performance and whether it degrades under certain circumstances.
+The combined RGB and depth data forms a \emph{point cloud}: a set of 3D coordinate points indicating where the sensor measured a solid object. Assuming that there is enough overlap between each pair of consecutive point clouds, we find a good registration by finding an optimal way to fit the two clouds. We experiment with different registration methods, and report on their performance and whether it degrades under certain circumstances.
 
 \section{Background}
 
@@ -45,7 +45,7 @@ The combined RGB and depth data forms a \emph{point cloud}: a set of 3D coordina
 
 \subsubsection{ICP Based Registration}
 
-A basic method used in almost every approach to 3D registration is \ac{ICP}\cite{besl1992method}, it is an expectation maximization method that iteratively minimizes the distance between each point and it's closest neighbor. Though \ac{ICP} is currently used mostly as a refinement step for more advanced algorithms, there are still some papers describing experiments where using \ac{ICP} as the main registration procedure has been successful [[WHICH]]. 
+A basic method used in almost every approach to 3D registration is \ac{ICP}\cite{besl1992method}. It is an expectation maximization method that iteratively minimizes the distance between each point and its closest neighbor. Though \ac{ICP} is currently used mostly as a refinement step for more advanced algorithms, \ac{ICP} can be used as the main registration procedure in scene reconstruction \cite{izadi2011kinectfusion,newcombe2011kinectfusion} and \ac{SLAM} \cite{nuchter20076d}.
 
 In \cite{segal2009generalized}, an extension to \ac{ICP} was introduced that takes into account the local characteristics of the matched points. This Generalized-ICP gives a higher weight to point correspondence errors if they are in a direction perpendicular to the estimated plane. It is mentioned in both \cite{rusinkiewicz2001efficient} and \cite{segal2009generalized} that using this extension prevents the application of a closed-form solution to the minimization step.
 
@@ -55,7 +55,7 @@ In a sense, Generalized-ICP and \ac{WSM} are similar in that they make an explic
 
 \subsubsection{Feature Based Registration}
 
-An alternative to \ac{ICP} based registration is feature-based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space, usually combined with \ac{RANSAC}. In stead of matching each point in the cloud to it's closest neighbour, characteristic points are extracted, and a feature \emph{descriptor} is calculated for each. Based on these descriptors, the feature points are matched to their counterparts in the other frame to get a number of \emph{correspondences}. Not all these correspondences may be correct though, so \ac{RANSAC} is often used to filter the outliers. 
+An alternative to \ac{ICP} based registration is feature-based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space, usually combined with \ac{RANSAC}. In stead of matching each point in the cloud to it's closest neighbor, characteristic points are extracted, and a feature \emph{descriptor} is calculated for each. Based on these descriptors, the feature points are matched to their counterparts in the other frame to get a number of \emph{correspondences}. Not all these correspondences may be correct though, so \ac{RANSAC} is often used to filter the outliers. 
 
 \cite{rusu2009fast} describes such an approach. In it, \ac{PFH} are used as feature descriptors. For each point, these features are based on the properties of points in its neighborhood. To elaborate, every pair of points within the neighborhood (Figure~\ref{fig:fpfh}) generates a number of features based on their angle with respect to the local normal. Because the number of neighbors can vary, a histogram is created. Initially, every single point is used to generate a descriptor. Then, to speed up the matching and make it more robust, only \emph{unique} feature points are selected, i.e. points whose descriptors are different from the mean descriptor. \ac{RANSAC} is then used to find the best feature point correspondences.  
 
@@ -77,7 +77,7 @@ In the KinectFusion project presented in \cite{izadi2011kinectfusion,newcombe201
 
 \cite{henry2010rgb}
 
-\subsubsection{\ac{SLAM}}
+\subsubsection{\acf{SLAM}}
 
 %This is also know as \emph{visual odometry} and a more complete overview can be found in \cite{scaramuzzavisual,fraundorfervisual}. 
 
