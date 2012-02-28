@@ -57,16 +57,18 @@ A basic method used in almost every approach to 3D registration is \ac{ICP}\cite
 
 \subsection{Feature Based Registration}
 
-An alternative to \ac{ICP} based registration is feature-based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space, usually combined with \ac{RANSAC}. In stead of matching each point in the cloud to it's closest neighbor, characteristic points are extracted, and a feature \emph{descriptor} is calculated for each. Based on these descriptors, the feature points are matched to their counterparts in the other frame to get a number of \emph{correspondences}. Not all these correspondences may be correct though, so \ac{RANSAC} is often used to filter the outliers. 
+An alternative to \ac{ICP} based registration is feature-based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space using \ac{RANSAC}. In stead of matching each point in the cloud to it's closest neighbor, characteristic \emph{descriptors} are calculated for each cloud. Based on these descriptors, the feature points are matched to their counterparts in the other frame to get a number of \emph{correspondences}. Not all these correspondences may be correct though, so \ac{RANSAC} is often used to filter the outliers. 
 
-\cite{rusu2009fast} describes such an approach. In it, \ac{PFH} are used as feature descriptors. For each point, these features are based on the properties of points in its neighborhood. To elaborate, every pair of points within the neighborhood (Figure~\ref{fig:fpfh}) generates a number of features based on their angle with respect to the local normal. Because the number of neighbors can vary, a histogram is created. Initially, every single point is used to generate a descriptor. Then, to speed up the matching and make it more robust, only \emph{unique} feature points are selected, i.e. points whose descriptors are different from the mean descriptor. \ac{RANSAC} is then used to find the best feature point correspondences.  
+The approach we use is described in \cite{rusu2009fast} and uses \ac{FPFH} as descriptors. These features are based on the geometric properties of a local neighborhood. \ac{RANSAC} is then used to find the best feature point correspondences from which a rigid transformation is computed.
 
-\begin{figure}[htbp]
-    \centering
-        \includegraphics[height=4cm]{ims/fpfh.jpg}
-    \caption{The PFH dependency diagram (image from \cite{rusu2009fast}). It indicates that every pair of points in the neighborhood generates features.}
-    \label{fig:fpfh}
-\end{figure}
+%For each point, these features are based on the properties of points in its neighborhood. To elaborate, every pair of points within the neighborhood (Figure~\ref{fig:fpfh}) generates a number of features based on their angle with respect to the local normal. Because the number of neighbors can vary, a histogram is created. Initially, every single point is used to generate a descriptor. Then, to speed up the matching and make it more robust, only \emph{unique} feature points are selected, i.e. points whose descriptors are different from the mean descriptor. \ac{RANSAC} is then used to find the best feature point correspondences.  
+
+%\begin{figure}[htbp]
+%    \centering
+%        \includegraphics[height=4cm]{ims/fpfh.jpg}
+%    \caption{The PFH dependency diagram (image from \cite{rusu2009fast}). It indicates that every pair of points in the neighborhood generates features.}
+%    \label{fig:fpfh}
+%\end{figure}
 
 \subsection{Applications}
 
