@@ -18,8 +18,8 @@
 \acrodef{PCL}[PCL]{Point Cloud Library}
 \acrodef{SAC-IA}[SAC-IA]{SAmple Consensus Initial Alignment}
 
-\title{Registration using a RGB-D camera\\
-{\large Project A.I. / Individual project}}
+\title{Registration Using a RGB-D Camera\\
+{\large Project A.I. / Individual Project}}
 
 \author{Carsten van Weelden \\ 0518824 \\ \texttt{cvanweelden@gmail.com} \and Thomas van den Berg \\ 5789346 \\ \texttt{thomas.g.vandenberg@gmail.com} \and
  \small{Supervisor:} \\ Arnoud Visser \\ University of Amsterdam\\
@@ -70,18 +70,17 @@ The approach we use is described in \cite{rusu2009fast} and uses \ac{FPFH} as de
 %    \label{fig:fpfh}
 %\end{figure}
 
-\subsection{Applications}
+\subsection{Global Registration}
 
-\subsubsection{Global registration}
+Global registration is the problem of reconstructing a global model from a sequence of frames. %Each frame has to be registered to a global coordinate system, generally defined by the axes of the first frame of the sequence. 
+One challenge in applying registration algorithms to this problem is that errors in pairwise registration accumulate over time. Other challenges associated with global registration are integrating the registered noisy measurements into a smooth global model and dealing with dynamic scenes in which objects move between frames.
 
-Global registration is the problem of reconstructing a global model from a sequence of frames. Each frame has to be registered to a global coordinate system, generally defined by the axes of the first frame of the sequence. One challenge in applying registration algorithms to this problem is that errors in pairwise registration accumulate over time. Other challenges associated with global registration are integrating the registered noisy measurements into a smooth global model and dealing with dynamic scenes in which objects move between frames.
-
-In the KinectFusion project presented in \cite{izadi2011kinectfusion,newcombe2011kinectfusion} \ac{ICP} is used to register depth frames captured using a Kinect camera to build a global model. For the model they use the volumetric representation described in \cite{curless1996volumetric}. 
+In the KinectFusion project presented in \cite{izadi2011kinectfusion,newcombe2011kinectfusion} \ac{ICP} is used to register depth frames captured using a Kinect camera to build a global model. They use a volumetric representation described in \cite{curless1996volumetric} to deal with registration noise and to provide a smooth model as result.
 %Explain how this deals with registration noise and error build up.
 
-\cite{henry2010rgb}
+In \cite{henry2010rgb} a method combining feature-based registration and \ac{ICP} is described. They use global consistency checking and loop closing to deal with registration noise and a surfel map to represent the global model.
 
-\subsubsection{\acf{SLAM}}
+\subsection{\acf{SLAM}}
 
 %This is also know as \emph{visual odometry} and a more complete overview can be found in \cite{scaramuzzavisual,fraundorfervisual}. 
 
