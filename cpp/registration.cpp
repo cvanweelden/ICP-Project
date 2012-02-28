@@ -12,6 +12,7 @@
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/filters/passthrough.h>
 
 #include <pcl/registration/icp.h>
 #include <pcl/registration/ia_ransac.h>
@@ -80,7 +81,7 @@ PointCloud<Normal>::Ptr getNormals( PointCloud<PointXYZRGB>::Ptr incloud, PointC
 	return cloud_normals;
 }
 
-PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype)
+PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype, bool cutoff, double cutoff_distance)
 {
 	PointCloud<PointXYZRGB>::Ptr frame (new PointCloud<PointXYZRGB>);
 	
@@ -101,6 +102,15 @@ PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype)
 	outlier_filter.setStddevMulThresh (1.0);
 	outlier_filter.setInputCloud (frame);
 	outlier_filter.filter (*frame);
+	
+	if (cutoff) {
+		// Remove if z > cutoff
+		PassThrough<PointXYZRGB> pass;
+		pass.setInputCloud (frame);
+		pass.setFilterFieldName ("z");
+		pass.setFilterLimits (0, cutoff_distance);
+		pass.filter (*frame);
+	}
 	
 	return frame;
 }
