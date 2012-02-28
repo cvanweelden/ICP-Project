@@ -25,7 +25,7 @@ enum Method {
 	FPFH
 };
 
-PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype);
+PointCloud<PointXYZRGB>::Ptr loadFrame( string filepath, string filetype, bool cutoff=false, double cutoff_distance=3.0);
 
 PointCloud<PointXYZRGB>::Ptr downsample(PointCloud<PointXYZRGB>::Ptr frame, float downsample_size);
 
