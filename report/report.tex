@@ -49,7 +49,7 @@ A basic method used in almost every approach to 3D registration is \ac{ICP}\cite
 
 In \cite{segal2009generalized}, an extension to \ac{ICP} was introduced that takes into account the local characteristics of the matched points. This Generalized-ICP gives a higher weight to point correspondence errors if they are in a direction perpendicular to the estimated plane. It is mentioned in both \cite{rusinkiewicz2001efficient} and \cite{segal2009generalized} that using this extension prevents the application of a closed-form solution to the minimization step.
 
-\ac{WSM} removes a simplyfying assumption from \ac{ICP}, namely that ``the range scans of different poses sample the environment's boundary at \emph{exactly} the same points''~\cite{pfister2002weighted}. In range scans, it often occurs that the points are much further apart in some areas of the model, because of the angle of the local surface or the distance from the sensor. The point-to-point error in these areas could easily be much greater, this is what the authors take into account by introducing an error which they name the \emph{correspondence error}. They model the variance of this error based on the distances to the closest model points, \cite{slamet2008boosting} give a clear illustration in their Figure 1. 
+\ac{WSM} removes a simplyfying assumption from \ac{ICP}, namely that ``the range scans of different poses sample the environment's boundary at \emph{exactly} the same points''~\cite{pfister2002weighted}. In range scans, it often occurs that the points are much farther apart in some areas of the model, because of the angle of the local surface or the distance from the sensor. The point-to-point error in these areas could easily be much greater, this is what the authors take into account by introducing an error which they name the \emph{correspondence error}. They model the variance of this error based on the distances to the closest model points, \cite{slamet2008boosting} give a clear illustration in their Figure 1. 
 
 In a sense, Generalized-ICP and \ac{WSM} are similar in that they make an explicit model of the error that the minimization step aims to minimize, based on the local characteristics. This has some clear advantages in terms of accuracy, but the extra computational costs are significant.
 
@@ -89,13 +89,18 @@ In \cite{slamet2008boosting} \ac{ICP} and \ac{WSM} are applied to solve the \ac{
 
 In \cite{nuchter20076d} \ac{ICP} is used on point cloud data to solve the \ac{SLAM} problem in 3D. They use a cached version of the kd-tree data structure to make this feasible in real-time. They state that in combination with loop closing and model refinement this leads to accurate results.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%                           EXPERIMENTS                            %%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 \section{Experiments}
 
-We ran a number of experiments to find out about the behavior of different registration methods and their performance in different settings. One of the most influential properties of the input data is the magnitude of the transformation between frames. To clarify; a slow-driving robot will record frames that are are mostly similar, making it easier to find corresponding points or features in both frames, whereas a shaky handheld RGB-D camera might output frames with a much larger discrepancy. Typically, a set of frames with small transformations between them is an easier input to a registration algorithm. However, when building a global model or using the registration to perform SLAM, each step contributes an amount of error to the final results, therefore it is better to use as few frames as possible as long as the registration still works reasonably well. [[Is er een artikel waar ze frames overslaan onder bepaalde condities?: dat even citeren.]]
+We ran a number of experiments to find out about the behavior of different registration methods and their performance in different settings. One of the most influential properties of the input data is the magnitude of the transformation between frames. To clarify; a slow-driving robot will record frames that are are mostly similar, making it easier to find corresponding points or features in both frames, whereas a shaky handheld RGB-D camera might output frames with a much larger discrepancy. Typically, a set of frames with small transformations between them is an easier input to a registration algorithm. However, when building a global model or using the registration to perform SLAM, each step contributes an amount of error to the final results, therefore it is better to use as few frames as possible as long as the registration still works reasonably well.
 
-Our first experiment examines whether the total buildup of error is larger when using more frames, we did this by [[...]] We've also run the registration on the dataset to create a global model, to show that the buildup of error can be quite catastrophic for this purpose.
+Our first experiment examines how quickly the error increases as the distance between the input frames increases. These experiments consist of registering each frame $i$ to the $i-n^{\mathrm{th}}$ frame, with $n = {1,2,...,k}$. By skipping frames in this manner, we artificially create a larger transformation for the registration step to solve. 
 
-The rest of our experiments focus on the advantages of using feature-based registration methods when the magnitude of the relative transform between frames gets larger. All of these experiments consist of registering each frame $i$ to the $i-n^{\mathrm{th}}$ frame, with $n = 1,2,3,...$. By skipping frames in this manner, we artificially create a larger transformation for the registration step to solve. We expect to see that the feature-based methods are better at dealing with this larger transformation.
+The second experiment focuses on the trade-off between the error build-up from using a lot of frames and the increased error from skipping frames. We look at the error resulting from registering a pair of frames using different numbers of intermediate frames.
 
 \subsection{Datasets}
 
@@ -107,11 +112,15 @@ Additionally, we recorded two datasets ourselves using a Kinect sensor. The setu
 
 \subsection{Implementation}
 
-For our implementation we use \ac{PCL} \cite{Rusu_ICRA2011_PCL}. We use the standard \ac{ICP} implementation provided by this library with a maximum of 25 iterations and maximum correspondence distance of 0.25m. We refer to this method in our figures as \texttt{ICP}.
+For our implementation we use \ac{PCL} \cite{Rusu_ICRA2011_PCL}. We use the standard \ac{ICP} implementation provided by this library with a maximum of 25 iterations and maximum correspondence distance of 0.25m. We refer to this method in our figures as \texttt{ICP}. [[Hier iets zeggen over parameter tuning.]]
 
  For our feature based method we use the implementation of the \ac{SAC-IA} method from \cite{rusu2009fast} as implemented for this library, limited to 1000 iterations with a maximum correspondence distance of 0.1m and minimum distance of 0.5m between the samples used for the \ac{RANSAC} method. For the \ac{FPFH} features we use a radius of 0.1m for normal estimation and 0.5m for feature computation. This implementation does not apply the Levenberg-Marquardt algorithm as described in \cite{rusu2009fast}. In stead, we test this method without refinement after the feature-based alignment and with the ICP-based refinement. We refer to these methods as \texttt{FPFH} and \texttt{FPFH+ICP} respectively.
  
- In all cases we remove sparse outliers by removing all points whose mean distance to its 50 nearest neighbors is more than one standard deviation from the overall mean and we subsample by taking one point for each 5cm$^3$ voxel.
+In all cases we remove sparse outliers by removing all points whose mean distance to its 50 nearest neighbors is more than one standard deviation from the overall mean and we subsample by taking one point for each 5cm$^3$ voxel.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%                           RESULTS                                %%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \subsection{Results}
@@ -127,38 +136,6 @@ Figure \ref{fig:xyz_results} shows the result of registering the first [[how man
     \label{fig:xyz_results}
 \end{figure}
 
-\subsection{Accumulated error over time}
-\label{accumulated_error}
-
-The registration step registers a pair of frames with a certain error (which we investigate in section \ref{registration_error}. For global registration and \ac{SLAM} this error accumulates as frames are sequentially registered to previously registered frames. One way to deal with this problem is by skipping frames. Registering fewer frames means accumulating less error, but the overlap between each pair of frames needs to be large enough for successful registration. 
-
-We investigate the effect of skipping frames by looking at the registration error after a fixed duration with varying offsets between registered frames. We calculate the mean error over 50 segments of 1 second starting at frame 1 to 50 for the \texttt{freiburg2\_xyz} and \texttt{freiburg1\_desk} datasets.
-
-\subsubsection{Results}
-
-Figure \ref{fig:accumulated_rotation_error} shows the error in orientation after registering frames over 1 second for both datasets. The left graph shows the \texttt{freiburg2\_xyz} and clearly shows the error decreasing for the \ac{FPFH} method, although when using \ac{ICP} the effect is less noticeable. All the methods perform well with high frameskip since the movement in this dataset is small enough such that frames have considerable overlap even if the duration between the frames being captured was large.
-
-With the \texttt{freiburg1\_desk} dataset (graph on the right) we see that increasing the number of frames skipped reduces the accumulated error for the feature-based methods up to a point where the error starts to increase over the base level for registering all frame pairs. Overlap between frames in this dataset is much smaller because of the faster movement of the camera. The frames are harder to register and we see a tradeoff between limiting the amount of error accumulated over consecutive transformations and the error in the registrations themselves. Compared to \ac{ICP} the feature-based methods are better able to handle large transformations and thus have a more favorable balance between these two sources of error.
-
-\begin{figure}[htbp]
-    \centering
-        \includegraphics[width=0.49\textwidth]{ims/xyzAccumulatedrotationerrorover30frames.png}
-        \includegraphics[width=0.49\textwidth]{ims/deskAccumulatedrotationerrorover30frames.png}
-    \caption{Rotation error after registering 30 consecutive frames (1 second) for the  \texttt{freiburg2\_xyz} dataset on the left and the \texttt{freiburg1\_desk} on the right.}
-    \label{fig:accumulated_rotation_error}
-\end{figure}
-
-Figure \ref{fig:accumulated_translation_error} shows the translation error after registration for the same runs. The results show the same behavior as the results for the translation error. 
-
-\begin{figure}[htbp]
-    \centering
-        \includegraphics[width=0.49\textwidth]{ims/xyzAccumulatedtranslationerrorover30frames.png}
-        \includegraphics[width=0.49\textwidth]{ims/deskAccumulatedtranslationerrorover30frames.png}
-    \caption{Translation error after registering 30 consecutive frames (1 second) for the  \texttt{freiburg2\_xyz} dataset on the left and the \texttt{freiburg1\_desk} on the right.}
-    \label{fig:accumulated_translation_error}
-\end{figure}
-
-These results show that the optimal value for the offset between registered frames is dependent on the dataset, specifically on how large the transformations between poses are, and how well the method can handle frame pairs with small overlap.
 
 \subsection{Registration error}
 \label{registration_error}
@@ -170,58 +147,76 @@ The translation error is given as the Euclidean norm of the difference between t
 
 \subsubsection{Results}
 
-\begin{figure}[H]
-    \centering
-        \includegraphics[width=0.49\textwidth]{ims/xyzMagnitudeofestimatedrotation.png}
-        \includegraphics[width=0.49\textwidth]{ims/deskMagnitudeofestimatedrotation.png}
-    \caption{The magnitude of the rotations estimated by the different methods on the two datasets, with \texttt{freiburg2\_xyz} on the left and \texttt{freiburg1\_desk} on the right. The x-axis represents the amount of frames between each registered pair.}
-    \label{fig:rotation_magnitude}
-\end{figure}
-
-As can be seen in Figures~\ref{fig:rotation_magnitude} and~\ref{fig:translation_magnitude}, ICP tends to estimate a smaller transformation between frames, this can be explained by the fact that ICP is likely to move to the closest local minimum. Examining the results more closely, we see that when \ac{ICP} is preceded by an initial alignment step, the results are different, this indicates that \ac{ICP} finds a \emph{different} local minimum in those cases, albeit not always a better one.
-
-\begin{figure}[H]
-    \centering
-        \includegraphics[width=0.49\textwidth]{ims/xyzMagnitudeofestimatedtranslation.png}
-        \includegraphics[width=0.49\textwidth]{ims/deskMagnitudeofestimatedtranslation.png}
-    \caption{The magnitude of the translations estimated, like Figure~\ref{fig:rotation_magnitude}. }
-    \label{fig:translation_magnitude}
-\end{figure}
-
-
-\begin{figure}[H]
-    \centering
-        \includegraphics[width=0.49\textwidth]{ims/xyzRotationerror.png}
-        \includegraphics[width=0.49\textwidth]{ims/deskRotationerror.png}
-    \caption{The rotation error, i.e. the spherical distance between the estimated rotation and the ground truth rotation, for both datasets.}
-    \label{fig:rotation_error}
-\end{figure}
-
-Figures ~\ref{fig:rotation_error} and~\ref{fig:translation_error} show that the combination of a feature-based initial alignment with an \ac{ICP} refinement can give the best results. Interestingly, as can be seen in~\ref{fig:rotation_error} using only \ac{FPFH} performs worse than using only \ac{ICP}, but when combined it allows \ac{ICP} to find a better solution. However, when the discrepancy between frames gets larger (more frames are skipped), it seems like the \ac{FPFH} method starts failing and `drags' \ac{ICP} along with it, away from the correct solution. This is easy to see in the right figures, but we found that it also occurred on the other dataset, when skipping more frames than shown here. We think this might be caused by the fact that feature based methods are more likely to produce large transforms; making it likely that they produce large errors. 
-
+Figures~\ref{fig:xyz_translation}, \ref{fig:desk_rotation}, and \ref{fig:desk_translation} show the rotation/translation error as the distance between registered frame pairs increases. The rotation error for the \texttt{xyz} dataset is not shown because this dataset contains no significant rotation of the camera. In each set of figures, the \emph{magnitude} of the estimated transformations is included, this is to give an intuition about the characteristics of the registration methods (e.g. we suspect that \ac{ICP} estimates transformations more conservatively compared to feature-based methods). 
 
 \begin{figure}[H]
     \centering
         \includegraphics[width=0.49\textwidth]{ims/xyzTranslationerror.png}
-        \includegraphics[width=0.49\textwidth]{ims/deskTranslationerror.png}
-    \caption{The translation error, i.e. the euclidian distance between the estimated translation and the ground truth translation, for both datasets.}
-    \label{fig:translation_error}
+        \includegraphics[width=0.49\textwidth]{ims/xyzMagnitudeofestimatedtranslation.png}
+    \caption{\textbf{\texttt{xyz}}: The left image shows the translation error (i.e. the euclidian distance between the estimated translation and the ground truth translation), the right image shows \emph{magnitude} of the ground-truth translation and of those estimated.}
+    \label{fig:xyz_translation}
 \end{figure}
 
+\begin{figure}[H]
+    \centering
+        \includegraphics[width=0.49\textwidth]{ims/deskRotationerror.png}
+        \includegraphics[width=0.49\textwidth]{ims/deskMagnitudeofestimatedrotation.png}
+    \caption{\textbf{\texttt{desk}}: The left image shows the rotation error (i.e. the spherical distance between the estimated rotation and the ground truth rotation), the right image shows the \emph{magnitude} of the ground-truth rotation and of those estimated}
+    \label{fig:desk_rotation}
+\end{figure}
 
-\section{Analysis}
+\begin{figure}[H]
+    \centering
+        \includegraphics[width=0.49\textwidth]{ims/deskTranslationerror.png}
+        \includegraphics[width=0.49\textwidth]{ims/deskMagnitudeofestimatedtranslation.png}
+    \caption{\textbf{\texttt{desk}}: The left image shows the translation error (i.e. the euclidian distance between the estimated translation and the ground truth translation), the right image shows \emph{magnitude} of the ground-truth translation and of those estimated.}
+    \label{fig:desk_translation}
+\end{figure}
 
-The experiments show that there is an optimal selection of frames that yields the lowest error over longer periods. The results shown in Figures~\ref{fig:accumulated_rotation_error} and~\ref{fig:accumulated_translation_error} show that the on the desk dataset, the feature-based methods have the least error buildup when skipping 4/5 frames between each pair. However, performance is very dependent on the dataset when using simply every n-th frame in this way. It is necessary to balance the performance of single pairs with the performance over a longer time. Using a fixed and constant portion of the frames is generally a bad idea because most input data will not be homogeneous (i.e. the magnitude of the transformation between each pair of frames will usually vary). Therefore it is necessary to use a \emph{keyframe selection} method, which decides whether or not to discard each frame based on some initial estimation of it's utility. Depending on the application, there are a number of ways to drop poor frames. This depends on whether there is the opportunity to record viewpoints as desired, e.g. in situations where a robot has enough time to explore, or where the sensor is handheld and software runs real-time. If this is the case, one might simply perform the registration, \emph{verify} that the result is correct, and keep recording a certain viewpoint until enough coverage is obtained. \cite{makadia2006fully} mention such a method for verification in their Section 5. If there isn't an opportunity to actively revisit certain viewpoints, dropping bad frames can still be beneficial, but dropping too many frames might lead to gaps in the model, as the camera continues on its path.
+Our intuition, namely that the combination of a feature-based initial alignment with an \ac{ICP} refinement can give the best results, is most clearly reflected in Figure~\ref{fig:desk_rotation}. However, when the discrepancy between frames gets larger (more frames are skipped), it seems like the \ac{FPFH} method starts failing. Even \ac{FPFH} combined with \ac{ICP} starts performing worse than pure \ac{ICP}. This is also visible in Figure~\ref{fig:desk_translation}. We think this might be caused by the fact that feature based methods are more likely to produce large transforms; making it likely that they produce large errors. [[DIT MOESTEN WE NOG UITLEGGEN VAN ARNOUD]]
 
-According to Figures~\ref{fig:rotation_magnitude} and~\ref{fig:translation_magnitude} \ac{ICP} underestimates the rotation and translation. The feature-based methods do indeed come up with much larger transformation. The counterintuitive result is that the smaller transformations estimated by \ac{ICP} result in a smaller mean error, even though the ground truth transformation is larger. This seems to indicate that \ac{ICP} moves a small distance in the right direction, whereas the feature-based method performs a larger transformation that does not necessarily move it closer to the true pose. This effect might be because the feature-based method finds the \emph{wrong} feature correspondences when little overlap is available.
+[[DIT ZOU DIE UITLEG MOETEN ZIJN]] According to Figures~\ref{fig:rotation_magnitude} and~\ref{fig:translation_magnitude} \ac{ICP} underestimates the rotation and translation. The feature-based methods do indeed come up with much larger transformation. The counterintuitive result is that the smaller transformations estimated by \ac{ICP} result in a smaller mean error, even though the ground truth transformation is larger. This seems to indicate that \ac{ICP} moves a small distance in the right direction, whereas the feature-based method performs a larger transformation that does not necessarily move it closer to the true pose. This effect might be because the feature-based method finds the \emph{wrong} feature correspondences when little overlap is available.
 
 We thought that \ac{ICP} would only work with small transformations between frames, and that it's effectiveness would quickly decrease with increasing discrepancy between frames. This seemed to be the case when we did a qualitative analysis of the registration results by viewing the global models. For this reason we thought that using fewer frames to reduce the error buildup would be detrimental to \ac{ICP}'s performance. However, this hypothesis does not seem to be confirmed by our experiments. The results displayed in Figures~\ref{fig:rotation_error} and~\ref{fig:translation_error} seem to indicate that on at least one dataset, the error of pure \ac{ICP} increases less than that of the other methods. It is interesting to note that the same phenomenon seems to be present in Figure 3a in \cite{steinbruecker_sturm_cremers_iccv11}, though those results were obtained using G-ICP in stead of vanilla \ac{ICP}. The authors do not give an explanation as to \emph{why} G-ICP would be more robust against larger displacements.
+
+\subsection{Accumulated error over time}
+\label{accumulated_error}
+
+The registration step registers a pair of frames with a certain error (which we investigate in section \ref{registration_error}. For global registration and \ac{SLAM} this error accumulates as frames are sequentially registered to previously registered frames. One way to deal with this problem is by skipping frames. Registering fewer frames means accumulating less error, but the overlap between each pair of frames needs to be large enough for successful registration. 
+
+We investigate the effect of skipping frames by looking at the registration error after a fixed duration whilst using a varying number of intermediate frames. We calculate the mean error over 50 segments of 1 second starting at frame 1 to 50 for the \texttt{freiburg2\_xyz} and \texttt{freiburg1\_desk} datasets.
+
+\subsubsection{Results}
+
+Figure \ref{fig:accumulated_error} shows the translation/rotation error after registering frames over 1 second for the \texttt{desk} dataset. We see that increasing the number of frames skipped reduces the accumulated error for the feature-based methods up to a point where the error starts to increase over the base level for registering all frame pairs. Overlap between frames in this dataset is small because of the faster movement of the camera. 
+
+\begin{figure}[htbp]
+    \centering
+        \includegraphics[width=0.49\textwidth]{ims/deskAccumulatedtranslationerrorover30frames.png}
+        \includegraphics[width=0.49\textwidth]{ims/deskAccumulatedrotationerrorover30frames.png}
+    \caption{Error built up after registering 30 consecutive frames (1 second) for the \texttt{freiburg1\_desk} dataset.}
+    \label{fig:accumulated_error}
+\end{figure}
+
+We don't show results on the \texttt{xyz} dataset here, results were similar but less pronounced because of the favorable conditions of that dataset. As expected, the optimal amount of frames used is different depending on the characteristics of the dataset.
+
+[[UHH]] The frames are harder to register and we see a tradeoff between limiting the amount of error accumulated over consecutive transformations and the error in the registrations themselves. Compared to \ac{ICP} the feature-based methods are better able to handle large transformations and thus have a more favorable balance between these two sources of error.
+
+[[UHH]] The experiments show that there is an optimal selection of frames that yields the lowest error over longer periods. The results shown in Figures~\ref{fig:accumulated_rotation_error} and~\ref{fig:accumulated_translation_error} show that the on the desk dataset, the feature-based methods have the least error buildup when skipping 4/5 frames between each pair. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%                           CONCLUSION                             %%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \section{Conclusion}
 Some of the experiments seem to confirm our hypothesis that \ac{ICP} preceded by a feature-based registration step yields best results, especially when finding the optimal amount of frames to skip.
 
 \ac{ICP} only performs well when using very similar frames, but this will cause a large build-up of error. In all of the papers where \ac{ICP} was used without initial alignment, some extra techniques were used to prevent this, e.g. in \cite{izadi2011kinectfusion} a volumetric representation is used to create a global model, from which a reprojection is made to function as the model for \ac{ICP}. This global model is a compact representation that is less sensitive to the build-up of error.
+
+\section{Discussion}
+[[BLABLA]] Performance is very dependent on the dataset when using simply every n-th frame in this [[WHAT]] way. It is necessary to balance the performance of single pairs with the performance over a longer time. Using a fixed and constant portion of the frames is generally a bad idea because most input data will not be homogeneous (i.e. the magnitude of the transformation between each pair of frames will usually vary). Therefore it is necessary to use a \emph{keyframe selection} method, which decides whether or not to discard each frame based on some initial estimation of it's utility. Depending on the application, there are a number of ways to drop poor frames. This depends on whether there is the opportunity to record viewpoints as desired, e.g. in situations where a robot has enough time to explore, or where the sensor is handheld and software runs real-time. If this is the case, one might simply perform the registration, \emph{verify} that the result is correct, and keep recording a certain viewpoint until enough coverage is obtained. \cite{makadia2006fully} mention such a method for verification in their Section 5. If there isn't an opportunity to actively revisit certain viewpoints, dropping bad frames can still be beneficial, but dropping too many frames might lead to gaps in the model, as the camera continues on its path.
 
 
 \bibliography{../../literature/refs}{}
