@@ -205,12 +205,12 @@ Figure~\ref{fig:accumulated_error} shows that there is an optimal selection of f
 
 
 \section{Conclusion}
-Some of the experiments seem to confirm our hypothesis that \ac{ICP} preceded by a feature-based registration step yields best results, especially when finding the optimal amount of frames to skip.
-
-\ac{ICP} only performs well when using very similar frames, but this will cause a large build-up of error. In all of the papers where \ac{ICP} was used without initial alignment, some extra techniques were used to prevent this, e.g. in \cite{izadi2011kinectfusion} a volumetric representation is used to create a global model, from which a reprojection is made to function as the model for \ac{ICP}. This global model is a compact representation that is less sensitive to the build-up of error.
+Our first experiment showed that \ac{ICP} performs worse when few frames are skipped, but that its error increases constantly when skipping more frames, whereas a feature-based method performs better at first but degrades quickly at higher distances between frames. The question was then which of the methods would be more efficient when reducing error build-up by skipping as many frames as possible. Our second experiment shows that feature-based methods can outperform \ac{ICP} at optimal frame intervals, giving a minimal global error build-up.
 
 \section{Discussion}
 It is necessary to balance the performance of single pairs with the performance over a longer time. Using a fixed and constant portion of the frames (i.e. using every $n^{\mathrm{th}}$ frame) is generally a bad idea because most input data will not be homogeneous (i.e. the magnitude of the transformation between each pair of frames will vary). Therefore it is necessary to use a \emph{keyframe selection} method, which decides whether or not to discard each frame based on some initial estimation of it's utility. Depending on the application, there are a number of ways to drop poor frames. This depends on whether there is the opportunity to record viewpoints as desired, e.g. in situations where a robot has enough time to explore, or where the sensor is handheld and software runs real-time. If this is the case, one might simply perform the registration, \emph{verify} that the result is correct, and keep recording a certain viewpoint until enough coverage is obtained. \cite{makadia2006fully} mention such a method for verification in their Section 5. If there isn't an opportunity to actively revisit certain viewpoints, dropping bad frames can still be beneficial, but dropping too many frames might lead to gaps in the model, as the camera continues on its path.
+
+\ac{ICP} only performs well when using very similar frames, but this will cause a large build-up of error. In all of the papers where \ac{ICP} was used without initial alignment, some extra techniques were used to prevent this, e.g. in \cite{izadi2011kinectfusion} a volumetric representation is used to create a global model, from which a reprojection is made to function as the model for \ac{ICP}. This global model is a compact representation that is less sensitive to the build-up of error.
 
 
 %%%%%%
