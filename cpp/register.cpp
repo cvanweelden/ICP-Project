@@ -179,6 +179,9 @@ int main (int argc, char** argv)
 		current_transformation = transformation * current_transformation;
 		
 		//Write the registered frame:
+		downsample_filter.setLeafSize (VOXEL_GRID_SIZE, VOXEL_GRID_SIZE, VOXEL_GRID_SIZE);
+		downsample_filter.setInputCloud (frame);
+		downsample_filter.filter (*frame);
 		saveToPLY(frame, outdir + files[i].substr(files[i].find_last_of("/\\")+1,files[i].size()-4));
 		
 		//Get the model for the next registration step
