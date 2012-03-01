@@ -57,7 +57,7 @@ A basic method used in almost every approach to 3D registration is \ac{ICP}\cite
 
 \subsection{Feature-based registration}
 
-An alternative to \ac{ICP} based registration is feature-based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space using \ac{RANSAC}. In stead of matching each point in the cloud to it's closest neighbor, characteristic \emph{descriptors} are calculated for each cloud. Based on these descriptors, the feature points are matched to their counterparts in the other frame to get a number of \emph{correspondences}. Not all these correspondences may be correct though, so \ac{RANSAC} is often used to filter the outliers. 
+An alternative to \ac{ICP} based registration is feature-based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space using \ac{RANSAC}. In stead of matching each point in the cloud to its closest neighbor, characteristic \emph{descriptors} are calculated for each cloud. Based on these descriptors, the feature points are matched to their counterparts in the other frame to get a number of \emph{correspondences}. Not all these correspondences may be correct though, so \ac{RANSAC} is often used to filter the outliers. 
 
 The approach we use is described in \cite{rusu2009fast} and uses \ac{FPFH} as descriptors. These features are based on the geometric properties of a local neighborhood. \ac{RANSAC} is then used to find the best feature point correspondences from which a rigid transformation is computed.
 
@@ -117,7 +117,7 @@ For our implementation we use \ac{PCL} \cite{Rusu_ICRA2011_PCL}. We use the stan
 
  For our feature based method we use the implementation of the \ac{SAC-IA} method from \cite{rusu2009fast} as implemented for this library\footnote{This implementation does not apply the Levenberg-Marquardt algorithm as described in \cite{rusu2009fast}.}, limited to 1000 iterations with a maximum correspondence distance of 5cm and minimum distance of 0.5m between the samples used for the \ac{RANSAC} method. We optimized the feature radius  for the \ac{FPFH} features in the same manner as the \ac{ICP} parameter for values between 10 and 35cm, which lead to a minimum at 30cm. For the normal estimation radius we use a third of the feature radius. We refer to this method as \texttt{FPFH}. We also experiment with a combination of \ac{ICP} and \ac{FPFH} by using the output of the \ac{FPFH} registration as initial guess for the \ac{ICP} algorithm. We refer to this method as \texttt{FPFH+ICP} in our figures.
  
-In all cases we remove sparse outliers by removing all points whose mean distance to its 50 nearest neighbors is more than one standard deviation from the overall mean and we subsample by taking one point for each 5cm$^3$ voxel.
+In all cases we remove sparse outliers by removing all points whose mean distance to its 50 nearest neighbors is more than one standard deviation from the overall mean and we subsample by taking one point for each 5cm$^3$ voxel. Since we focus on indoor scenes we remove all points  further than 3m away on the z-axis.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%                           RESULTS                                %%%%%%
@@ -150,7 +150,7 @@ We registered [[how many?]] frames from the \texttt{xyz} dataset using \ac{ICP} 
 We show how the error for registering a frame pair increases as the frames are farther apart by computing the rotation and translation error for frame pairs with varying offsets between frames. Here we use the frame offset as a proxy for the magnitude of the transformation, but we also show how the rotation and translation magnitudes vary with the frame offset.
 
 We calculate the rotation error as the angular distance between the true rotation $q$ and the estimated rotation $\hat q$ which we calculate as $min(\theta, 2\pi - \theta)$ where $\theta$ is the angle between the two rotations represented as quaternions: $\theta = 2 * cos^{-1}(q \cdot \hat q)$. %Dit hierboven heb ik opgeschreven omdat het nergens te vinden was.
-The translation error is given as the Euclidean norm of the difference between the true and estimated translation. We compute the mean errors over 50 frame pairs for up to 2 seconds apart from the start of the \texttt{xyz} and \texttt{desk} datasets.
+The translation error is given as the Euclidean norm of the difference between the true and estimated translation. We compute the mean errors over 100 frame pairs for up to 1 second apart from the start of the \texttt{xyz} and \texttt{desk} datasets.
 
 \subsubsection{Results}
 
@@ -189,7 +189,7 @@ We thought that \ac{ICP} would only work with small transformations between fram
 
 The registration step registers a pair of frames with a certain error (which we investigate in section \ref{registration_error}. For global registration and \ac{SLAM} this error accumulates as frames are sequentially registered to previously registered frames. One way to deal with this problem is by skipping frames. Registering fewer frames means accumulating less error, but the overlap between each pair of frames needs to be large enough for successful registration. 
 
-We investigate the effect of skipping frames by looking at the registration error after a fixed duration whilst using a varying number of intermediate frames. We calculate the mean error over 50 segments of 1 second starting at frame 1 to 50 for the \texttt{xyz} and \texttt{desk} datasets.
+We investigate the effect of skipping frames by looking at the registration error after a fixed duration whilst using a varying number of intermediate frames. We calculate the mean error over 100 segments of 1 second starting at frame 1 to 100 for the \texttt{xyz} and \texttt{desk} datasets.
 
 \subsubsection{Results}
 
@@ -203,7 +203,7 @@ Figure \ref{fig:accumulated_error} shows the translation/rotation error after re
     \label{fig:accumulated_error}
 \end{figure}
 
-Figure~\ref{fig:accumulated_error} shows that there is an optimal selection of frames that yields the lowest error over longer periods. It shows that the feature-based methods have the least error buildup when skipping 4/5 frames between each pair. This reflects the tradeoff between limiting the amount of error accumulated over consecutive transformations and the error in the registrations themselves. Compared to \ac{ICP} the feature-based methods are better able to handle large transformations and thus have a more favorable balance between these two sources of error.
+Figure~\ref{fig:accumulated_error} shows that there is an optimal selection of frames that yields the lowest error over longer periods. It shows that the feature-based methods have the least error buildup when skipping 4 to 5 frames between each pair. This reflects the tradeoff between limiting the amount of error accumulated over consecutive transformations and the error in the registrations themselves. Compared to \ac{ICP} the feature-based methods are better able to handle large transformations and thus have a more favorable balance between these two sources of error.
 
 \subsection{Final results}
 
