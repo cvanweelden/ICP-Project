@@ -162,7 +162,7 @@ int main (int argc, char** argv)
 	
 	//Initialize the model
 	PointCloud<PointXYZRGB>::Ptr model = loadFrame(files[0], filetype, true);
-	saveToPLY(model, outdir + files[0].substr(files[0].find_last_of("/\\")+1,files[0].size()-4));
+	//saveToPLY(model, outdir + files[0].substr(files[0].find_last_of("/\\")+1,files[0].size()-4));
 	
 	//Initialize transformation from points in frame to points in model
 	Eigen::Matrix4f current_transformation = Eigen::Matrix4f::Identity();
