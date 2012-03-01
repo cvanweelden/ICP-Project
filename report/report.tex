@@ -45,7 +45,7 @@ The combined RGB and depth data forms a \emph{point cloud}. A standard method or
 
 \section{Background}
 
-\subsection{ICP Based Registration}
+\subsection{ICP-based registration}
 
 A basic method used in almost every approach to 3D registration is \ac{ICP}\cite{besl1992method}. It is an expectation maximization method that iteratively minimizes the distance between each point and its closest neighbor. Though \ac{ICP} is currently used mostly as a refinement step for more advanced algorithms, \ac{ICP} can be used as the main registration procedure in scene reconstruction \cite{izadi2011kinectfusion,newcombe2011kinectfusion} and \ac{SLAM} \cite{nuchter20076d}.
 
@@ -55,7 +55,7 @@ A basic method used in almost every approach to 3D registration is \ac{ICP}\cite
 
 %In a sense, Generalized-ICP and \ac{WSM} are similar in that they make an explicit model of the error that the minimization step aims to minimize, based on the local characteristics. This has some clear advantages in terms of accuracy, but the extra computational costs are significant.
 
-\subsection{Feature Based Registration}
+\subsection{Feature-based registration}
 
 An alternative to \ac{ICP} based registration is feature-based registration in which the transformation between frames is estimated from correspondences between feature points in 3D space using \ac{RANSAC}. In stead of matching each point in the cloud to it's closest neighbor, characteristic \emph{descriptors} are calculated for each cloud. Based on these descriptors, the feature points are matched to their counterparts in the other frame to get a number of \emph{correspondences}. Not all these correspondences may be correct though, so \ac{RANSAC} is often used to filter the outliers. 
 
@@ -109,6 +109,7 @@ We use two RGB-D datasets from the benchmark presented in \cite{sturm11rss-rgbd}
 
 The specific datasets that we use are \texttt{freiburg2\_xyz} and \texttt{freiburg1\_desk}\footnote{Available at \url{http://cvpr.in.tum.de/data/datasets/rgbd-dataset}}. The \texttt{xyz} dataset was recorded with a slow and steady movement of the RGB-D sensor, so that the magnitude of the translation is constant. Rotation is kept to a minimum. The \texttt{desk} dataset is recorded with much faster movement, leading to larger differences between subsequent frames as well as motion blur and rolling shutter effects. It contains both translation and rotation between frames.
 
+[[Only describe sofa set?]]
 Additionally, we recorded two datasets ourselves using a Kinect sensor. The setup of this was as follows, we set up the Kinect on a wheeled cart to be able to create a stable and uniform motion. We then rode the cart around an object, trying to keep the camera pointing towards the object's center. We show qualitative results on the two datasets that we recorded ourselves.
 
 \subsection{Implementation}
@@ -124,18 +125,24 @@ In all cases we remove sparse outliers by removing all points whose mean distanc
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\subsection{Results}
+\subsection{Frame-to-frame ICP results}
 
-Using \ac{FPFH} with \ac{ICP} we registered frames from the two datasets as well as from two datasets that we recorded ourselves. This section presents some of the qualitative results before we evaluate against the benchmark ground truth in the following sections.
-
-Figure \ref{fig:xyz_results} shows the result of registering the first [[how many?]] frames of the \texttt{xyz} dataset. We can clearly see the effect of errors in the pairwise registration where, after a single mis-estimation of the transformation between frames, all following frames are also badly registered, resulting in duplicate objects such as the teddy bear behind the desk and the calibration pattern to the right.
-
-\begin{figure}[htbp]
+\begin{figure}[ht]
     \centering
-        \includegraphics[width=\textwidth]{ims/xyz_results.png}
-    \caption{Registration results on the \texttt{xyz} dataset.}
-    \label{fig:xyz_results}
+        \includegraphics[width=\textwidth]{ims/xyz_results_f2f.png}
+    \caption{Registration results on the \texttt{xyz} dataset using \ac{ICP} on each consecutive frame pair.}
+    \label{fig:xyz_results_f2f}
 \end{figure}
+
+%Using \ac{FPFH} with \ac{ICP} we registered frames from the two datasets as well as from two datasets that we recorded ourselves. This section presents some of the qualitative results before we evaluate against the benchmark ground truth in the following sections.
+
+We registered [[how many?]] frames from the \texttt{xyz} dataset using \ac{ICP} on each consecutive frame pair. The results are shown in Figure \ref{fig:xyz_results_f2f}. We see an obvious error in registration caused by inaccuracy in the frame-to-frame registration, as well as accumulated error over time as each registration step relies on the previous registrations. We investigate these sources of error in respectively Sections \ref{registration_error} and \ref{accumulated_error}.
+
+
+
+%Figure \ref{fig:xyz_results} shows the result of registering the first [[how many?]] frames of the \texttt{xyz} dataset. We can clearly see the effect of errors in the pairwise registration where, after a single mis-estimation of the transformation between frames, all following frames are also badly registered, resulting in duplicate objects such as the teddy bear behind the desk and the calibration pattern to the right.
+
+
 
 
 \subsection{Registration error}
@@ -178,7 +185,7 @@ Our intuition, namely that the combination of a feature-based initial alignment 
 
 We thought that \ac{ICP} would only work with small transformations between frames, and that it's effectiveness would quickly decrease with increasing discrepancy between frames. This seemed to be the case when we did a qualitative analysis of the registration results by viewing the global models. However, this hypothesis does not seem to be confirmed by our experiments. The results displayed in the preceding figures seem to indicate that the error of pure \ac{ICP} increases less than that of the other methods. It is interesting to note that the same phenomenon seems to be present in Figure 3a in \cite{steinbruecker_sturm_cremers_iccv11}, though those results were obtained using G-ICP in stead of vanilla \ac{ICP}. The authors do not give an explanation as to \emph{why} G-ICP would be more robust against larger displacements. We think this might be caused by the fact that feature based methods are more likely to produce large transforms; making it likely that they produce large errors, whilst \ac{ICP} is more conservative.
 
-\subsection{Error Accumulation}
+\subsection{Error accumulation}
 \label{accumulated_error}
 
 The registration step registers a pair of frames with a certain error (which we investigate in section \ref{registration_error}. For global registration and \ac{SLAM} this error accumulates as frames are sequentially registered to previously registered frames. One way to deal with this problem is by skipping frames. Registering fewer frames means accumulating less error, but the overlap between each pair of frames needs to be large enough for successful registration. 
@@ -198,6 +205,29 @@ Figure \ref{fig:accumulated_error} shows the translation/rotation error after re
 \end{figure}
 
 Figure~\ref{fig:accumulated_error} shows that there is an optimal selection of frames that yields the lowest error over longer periods. It shows that the feature-based methods have the least error buildup when skipping 4/5 frames between each pair. This reflects the tradeoff between limiting the amount of error accumulated over consecutive transformations and the error in the registrations themselves. Compared to \ac{ICP} the feature-based methods are better able to handle large transformations and thus have a more favorable balance between these two sources of error.
+
+\subsection{Final results}
+
+\begin{figure}[htbp]
+    \centering
+        \includegraphics[width=\textwidth]{ims/xyz_results.png}
+    \caption{Registration results on the \texttt{xyz} dataset using [[wat?]]}
+    \label{fig:xyz_results}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+        \includegraphics[width=\textwidth]{ims/desk_results.png}
+    \caption{Registration results on the \texttt{desk} dataset using  [[wat?]]}
+    \label{fig:desk_results}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+        \includegraphics[width=\textwidth]{ims/sofa_results.png}
+    \caption{Registration results on the \texttt{sofa} dataset using  [[wat?]]}
+    \label{fig:sofa_results}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%                           CONCLUSION                             %%%%%%

@@ -179,6 +179,7 @@ int main (int argc, char** argv)
 		current_transformation = transformation * current_transformation;
 		
 		//Write the registered frame:
+		VoxelGrid<PointXYZRGB> downsample_filter;
 		downsample_filter.setLeafSize (VOXEL_GRID_SIZE, VOXEL_GRID_SIZE, VOXEL_GRID_SIZE);
 		downsample_filter.setInputCloud (frame);
 		downsample_filter.filter (*frame);
