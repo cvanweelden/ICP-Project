@@ -109,8 +109,7 @@ We use two RGB-D datasets from the benchmark presented in \cite{sturm11rss-rgbd}
 
 The specific datasets that we use are \texttt{freiburg2\_xyz} and \texttt{freiburg1\_desk}\footnote{Available at \url{http://cvpr.in.tum.de/data/datasets/rgbd-dataset}}. The \texttt{xyz} dataset was recorded with a slow and steady movement of the RGB-D sensor, so that the magnitude of the translation is constant. Rotation is kept to a minimum. The \texttt{desk} dataset is recorded with much faster movement, leading to larger differences between subsequent frames as well as motion blur and rolling shutter effects. It contains both translation and rotation between frames.
 
-[[Only describe sofa set?]]
-Additionally, we recorded two datasets ourselves using a Kinect sensor. The setup of this was as follows, we set up the Kinect on a wheeled cart to be able to create a stable and uniform motion. We then rode the cart around an object, trying to keep the camera pointing towards the object's center. We show qualitative results on the two datasets that we recorded ourselves.
+Additionally, we recorded a dataset ourselves using a Kinect sensor. The setup of this was as follows, we set up the Kinect on a wheeled cart to be able to create a stable and uniform motion. We then rode the cart around an object, trying to keep the camera pointing towards the object's center. The recorded object was a red sofa on a wooden floor and we will refer to this dataset as the \texttt{sofa} set. A view of the resulting dataset can be found in Figure \ref{fig:sofa_results}.
 
 \subsection{Implementation}
 
