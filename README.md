@@ -7,6 +7,7 @@ In the cpp folder there are several procedures for registering point clouds and 
 ## Quickstart
 
 You will need cmake (we used version 2.8.7) and c++ compilers (we used those that come with version 3.2.6 of Xcode). First clone the repo and cd to the created directory, the issue the following commands.
+
 ```bash
 $cd cpp
 $mkdir build
@@ -14,4 +15,5 @@ $cd build
 $cmake ../
 $make
 ```
+
 This will create several executables in your build folder, notably `register` and `evaluation`. For more details see the [Wiki](https://github.com/cvanweelden/ICP-Project/wiki)
