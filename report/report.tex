@@ -109,7 +109,15 @@ We use two RGB-D datasets from the benchmark presented in \cite{sturm11rss-rgbd}
 
 The specific datasets that we use are \texttt{freiburg2\_xyz} and \texttt{freiburg1\_desk}\footnote{Available at \url{http://cvpr.in.tum.de/data/datasets/rgbd-dataset}}. The \texttt{xyz} dataset was recorded with a slow and steady movement of the RGB-D sensor, so that the magnitude of the translation is constant. Rotation is kept to a minimum. The \texttt{desk} dataset is recorded with much faster movement, leading to larger differences between subsequent frames as well as motion blur and rolling shutter effects. It contains both translation and rotation between frames.
 
-Additionally, we recorded a dataset ourselves using a Kinect sensor. The setup of this was as follows, we set up the Kinect on a wheeled cart to be able to create a stable and uniform motion. We then rode the cart around an object, trying to keep the camera pointing towards the object's center. The recorded object was a red sofa on a wooden floor and we will refer to this dataset as the \texttt{sofa} set. A view of the resulting dataset can be found in Figure \ref{fig:sofa_results}.
+Additionally, we recorded a dataset ourselves using a Kinect sensor. The setup of this was as follows, we set up the Kinect on a wheeled cart to be able to create a stable and uniform motion. We then rode the cart around an object, trying to keep the camera pointing towards the object's center. The recorded object was a red sofa on a wooden floor and we will refer to this dataset as the \texttt{sofa} set. An example frame is shown in Figure \ref{examplesofa}.
+
+\begin{figure}[ht]
+    \centering
+        \includegraphics[width=\textwidth]{ims/examplesofa.png}
+    \caption{Example frame of the \texttt{sofa} dataset.}
+    \label{examplesofa}
+\end{figure}
+
 
 \subsection{Implementation}
 
@@ -135,7 +143,7 @@ In all cases we remove sparse outliers by removing all points whose mean distanc
 
 %Using \ac{FPFH} with \ac{ICP} we registered frames from the two datasets as well as from two datasets that we recorded ourselves. This section presents some of the qualitative results before we evaluate against the benchmark ground truth in the following sections.
 
-We registered [[how many?]] frames from the \texttt{xyz} dataset using \ac{ICP} on each consecutive frame pair. The results are shown in Figure \ref{fig:xyz_results_f2f}. We see an obvious error in registration caused by inaccuracy in the frame-to-frame registration, as well as accumulated error over time as each registration step relies on the previous registrations. We investigate these sources of error in respectively Sections \ref{registration_error} and \ref{accumulated_error}.
+We registered 600 frames from the \texttt{xyz} dataset using \ac{ICP} on each consecutive frame pair. The results are shown in Figure \ref{fig:xyz_results_f2f}. We see an obvious error in registration caused by inaccuracy in the frame-to-frame registration, as well as accumulated error over time as each registration step relies on the previous registrations. We investigate these sources of error in respectively Sections \ref{registration_error} and \ref{accumulated_error}.
 
 
 
@@ -207,26 +215,26 @@ Figure~\ref{fig:accumulated_error} shows that there is an optimal selection of f
 
 \subsection{Final results}
 
-Using our best performing method which uses \ac{FPFH} for initial registration and \ac{ICP} for refinement we registered frames from the \texttt{xyz}, \texttt{desk}, and \texttt{sofa} datasets. The results are shown in respectively Figures \ref{fig:xyz_results}, \ref{fig:desk_results}, and \ref{fig:sofa_results}.
+Using our best performing method which uses \ac{FPFH} for initial registration and \ac{ICP} for refinement we registered the first 20 seconds from the \texttt{xyz} and 120 frames\footnote{Since we captured this with a variable number of frames per second we cannot specify  the time period exactly.} \texttt{sofa} datasets. The results are shown in respectively Figures \ref{fig:xyz_results} and \ref{fig:sofa_results}. Compared to the previous results in Figure \ref{fig:xyz_results_f2f} we see that the registration is more successful. The global error (which you can easily see in Figure \ref{fig:xyz_results_f2f} as multiple copies of the teddybear in the background and smearing of the coke can in the foreground) is less pronounced. For the \texttt{sofa} dataset we see that holes in the surface of the couch have been filled in by registering the data from multiple viewpoints.
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
     \centering
         \includegraphics[width=\textwidth]{ims/xyz_results.png}
-    \caption{Registration results on the \texttt{xyz} dataset using [[wat? frameskip, settings etc]]}
+    \caption{Registration results on the \texttt{xyz} dataset using \texttt{FPFH+ICP} method with frameskip offset 40.}
     \label{fig:xyz_results}
 \end{figure}
 
-\begin{figure}[htbp]
-    \centering
-        \includegraphics[width=\textwidth]{ims/desk_results.png}
-    \caption{Registration results on the \texttt{desk} dataset using  [[wat?]]}
-    \label{fig:desk_results}
-\end{figure}
+%\begin{figure}[htbp]
+%    \centering
+%        \includegraphics[width=\textwidth]{ims/desk_results.png}
+%    \caption{Registration results on the \texttt{desk} dataset using  [[wat?]]}
+%    \label{fig:desk_results}
+%\end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
     \centering
         \includegraphics[width=\textwidth]{ims/sofa_results.png}
-    \caption{Registration results on the \texttt{sofa} dataset using  [[wat?]]}
+    \caption{Registration results on the \texttt{sofa} dataset using \texttt{FPFH+ICP} method with frameskip offset 5.}
     \label{fig:sofa_results}
 \end{figure}
 
