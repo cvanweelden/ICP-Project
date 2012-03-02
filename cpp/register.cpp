@@ -34,17 +34,17 @@ enum ModelMode {
 void saveToPLY( PointCloud<PointXYZRGB>::Ptr cloud, string filepath )
 {
 	uint8_t tmp;
-    // for (size_t j=0; j < cloud->points.size(); j++) {
-    //     PointXYZRGB *p = &cloud->points[j];
-    //     // unpack rgb into r/g/b
-    //     uint32_t rgb = *reinterpret_cast<int*>(&p->rgb);
-    //     uint8_t b = (rgb >> 16) & 0x0000ff;
-    //     uint8_t g = (rgb >> 8)  & 0x0000ff;
-    //     uint8_t r = (rgb)       & 0x0000ff;
-    //     // pack r/g/b into rgb
-    //     rgb = ((uint32_t)r << 16 | (uint32_t)g << 8 | (uint32_t)b);
-    //     p->rgb = *reinterpret_cast<float*>(&rgb);
-    // }
+    for (size_t j=0; j < cloud->points.size(); j++) {
+        PointXYZRGB *p = &cloud->points[j];
+        // unpack rgb into r/g/b
+        uint32_t rgb = *reinterpret_cast<int*>(&p->rgb);
+        uint8_t b = (rgb >> 16) & 0x0000ff;
+        uint8_t g = (rgb >> 8)  & 0x0000ff;
+        uint8_t r = (rgb)       & 0x0000ff;
+        // pack r/g/b into rgb
+        rgb = ((uint32_t)r << 16 | (uint32_t)g << 8 | (uint32_t)b);
+        p->rgb = *reinterpret_cast<float*>(&rgb);
+    }
 	io::savePLYFileBinary<PointXYZRGB> (filepath, *cloud);
 }
 
