@@ -1,4 +1,4 @@
-The goal of this project was to register depth images captured using a Kinect to create a global point cloud model. You can see some results on our [log](https://github.com/cvanweelden/ICP-Project/wiki/ResearchLog).
+The goal of this project was to register depth images captured using a Kinect to create a global point cloud model. You can see some results on our [log](https://github.com/cvanweelden/ICP-Project/wiki/ResearchLog). Also see our [final report](https://github.com/downloads/cvanweelden/ICP-Project/report.pdf).
 
 # Registration code using ICP
 
